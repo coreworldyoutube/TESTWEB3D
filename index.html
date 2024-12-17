@@ -34,12 +34,32 @@
     directionalLight.position.set(5, 5, 5).normalize();
     scene.add(directionalLight);
 
+    let model;
+
     // PMXモデルの読み込み
     const loader = new THREE.MMDLoader();
-    loader.load('models/inubashiri.pmx', (model) => {
-      scene.add(model);
-      model.scale.set(0.01, 0.01, 0.01);  // モデルのスケール調整
-    }, undefined, (error) => console.error(error));
+
+    // ユーザーによるPMXファイルのアップロード
+    const fileInput = document.getElementById('fileInput');
+    fileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const arrayBuffer = e.target.result;
+          loader.loadPMX(arrayBuffer, (loadedModel) => {
+            // 既存のモデルを削除して新しいモデルをシーンに追加
+            if (model) {
+              scene.remove(model); // 古いモデルを削除
+            }
+            model = loadedModel;
+            scene.add(model);
+            model.scale.set(0.01, 0.01, 0.01);  // 新しいモデルのスケール調整
+          });
+        };
+        reader.readAsArrayBuffer(file);  // ファイルをArrayBufferとして読み込む
+      }
+    });
 
     // カメラの位置設定
     camera.position.z = 5;
@@ -47,6 +67,14 @@
     // アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
+      if (model) {
+        // モデルにアニメーションがある場合、アニメーションの更新処理を行う
+        if (model.mmdAnimations) {
+          model.mmdAnimations.forEach((animation) => {
+            animation.update(0.016); // アニメーションの更新
+          });
+        }
+      }
       renderer.render(scene, camera);
     }
     animate();
@@ -56,27 +84,6 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
-    });
-
-    // ユーザーによるPMXファイルのアップロード
-    const fileInput = document.getElementById('fileInput');
-
-    fileInput.addEventListener('change', (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const arrayBuffer = e.target.result;
-          const loader = new THREE.MMDLoader();
-          loader.loadPMX(arrayBuffer, (model) => {
-            // 既存のモデルを削除して新しいモデルをシーンに追加
-            scene.clear();
-            scene.add(model);
-            model.scale.set(0.01, 0.01, 0.01);  // 新しいモデルのスケール調整
-          });
-        };
-        reader.readAsArrayBuffer(file);  // ファイルをArrayBufferとして読み込む
-      }
     });
   </script>
 </body>
