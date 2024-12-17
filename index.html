@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Game Example with Three.js</title>
+  <title>MMD Model Example</title>
   <style>
     body { margin: 0; }
     canvas { display: block; }
@@ -11,43 +11,46 @@
 </head>
 <body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three-mmd-loader@0.3.3/dist/three-mmd-loader.min.js"></script>
+
   <script>
     // シーンの作成
     const scene = new THREE.Scene();
-
-    // カメラの作成
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-    // レンダラーの作成
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // 立方体ジオメトリとマテリアルを使ってメッシュを作成
-    const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
+    // MMDローダーの作成
+    const mmdLoader = new THREE.MMDLoader();
+
+    // モデルの読み込み
+    mmdLoader.load('models/inuboshi_kaba_v1_0a.pmx', function (object) {
+      scene.add(object);
+    }, function (xhr) {
+      console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+    }, function (error) {
+      console.log('An error happened:', error);
+    });
+
+    // ライトをシーンに追加
+    const light = new THREE.AmbientLight(0x404040);  // 環境光
+    scene.add(light);
 
     // カメラの位置を設定
     camera.position.z = 5;
-
-    // ウィンドウリサイズ対応
-    window.addEventListener('resize', function () {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-    });
 
     // アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
-      // 立方体を回転させる
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
+      // モデルの回転（必要なら）
+      scene.traverse(function (child) {
+        if (child.isMesh) {
+          child.rotation.y += 0.01;
+        }
+      });
 
-      // シーンを描画
       renderer.render(scene, camera);
     }
 
