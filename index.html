@@ -23,10 +23,21 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // 立方体ジオメトリとマテリアルを使ってメッシュを作成
+    // 各面に使うテクスチャの読み込み
+    const loader = new THREE.TextureLoader();
+    const textures = [
+      loader.load('path_to_image1.jpg'),
+      loader.load('path_to_image2.jpg'),
+      loader.load('path_to_image3.jpg'),
+      loader.load('path_to_image4.jpg'),
+      loader.load('path_to_image5.jpg'),
+      loader.load('path_to_image6.jpg')
+    ];
+
+    // 立方体ジオメトリとテクスチャを使ってメッシュを作成
     const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
+    const materials = textures.map(texture => new THREE.MeshBasicMaterial({ map: texture }));
+    const cube = new THREE.Mesh(geometry, materials);
     scene.add(cube);
 
     // カメラの位置を設定
