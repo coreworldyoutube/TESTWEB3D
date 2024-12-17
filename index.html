@@ -1,44 +1,47 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D MMDモデル表示</title>
+  <title>MMD Model Viewer</title>
   <style>
     body { margin: 0; }
     canvas { display: block; }
+    #fileInput {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1;
+      padding: 5px;
+    }
   </style>
 </head>
 <body>
+  <input type="file" id="fileInput" accept=".pmx" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three-mmd-loader@0.1.7/dist/three-mmd-loader.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three-mmd-loader@1.0.0/dist/three-mmd-loader.js"></script>
   <script>
+    // シーン、カメラ、レンダラーの設定
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // 背景色を黒に設定
-    scene.background = new THREE.Color(0x000000);
-
     // ライトの設定
-    scene.add(new THREE.AmbientLight(0x404040, 1));
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    scene.add(new THREE.AmbientLight(0x404040, 1));  // 周囲光
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);  // 方向光
     directionalLight.position.set(5, 5, 5).normalize();
     scene.add(directionalLight);
 
-    // MMDモデルの読み込み
+    // PMXモデルの読み込み
     const loader = new THREE.MMDLoader();
     loader.load('models/inubashiri.pmx', (model) => {
       scene.add(model);
-      model.scale.set(0.01, 0.01, 0.01);
-      model.position.set(0, -1, 0); // モデルの位置調整
-    }, undefined, (error) => {
-      console.error('モデル読み込みエラー:', error);
-    });
+      model.scale.set(0.01, 0.01, 0.01);  // モデルのスケール調整
+    }, undefined, (error) => console.error(error));
 
-    // カメラ位置設定
+    // カメラの位置設定
     camera.position.z = 5;
 
     // アニメーションループ
@@ -53,6 +56,27 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
+    });
+
+    // ユーザーによるPMXファイルのアップロード
+    const fileInput = document.getElementById('fileInput');
+
+    fileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const arrayBuffer = e.target.result;
+          const loader = new THREE.MMDLoader();
+          loader.loadPMX(arrayBuffer, (model) => {
+            // 既存のモデルを削除して新しいモデルをシーンに追加
+            scene.clear();
+            scene.add(model);
+            model.scale.set(0.01, 0.01, 0.01);  // 新しいモデルのスケール調整
+          });
+        };
+        reader.readAsArrayBuffer(file);  // ファイルをArrayBufferとして読み込む
+      }
     });
   </script>
 </body>
