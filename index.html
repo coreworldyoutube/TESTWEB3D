@@ -7,21 +7,17 @@
   <style>
     body { margin: 0; }
     canvas { display: block; }
-    #fileInput {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 1;
-      padding: 5px;
-    }
   </style>
 </head>
 <body>
+  <!-- ここでファイルアップロード -->
   <input type="file" id="fileInput" accept=".pmx" />
+  
+  <!-- 3D描画用のキャンバス -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three-mmd-loader@1.0.0/dist/three-mmd-loader.js"></script>
   <script>
-    // シーン、カメラ、レンダラーの設定
+    // シーンの設定
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
@@ -34,47 +30,33 @@
     directionalLight.position.set(5, 5, 5).normalize();
     scene.add(directionalLight);
 
-    let model;
+    // カメラの設定
+    camera.position.z = 5;
 
-    // PMXモデルの読み込み
+    // ファイルの読み込み処理
+    const fileInput = document.getElementById('fileInput');
     const loader = new THREE.MMDLoader();
 
-    // ユーザーによるPMXファイルのアップロード
-    const fileInput = document.getElementById('fileInput');
+    // PMXファイルを選択して読み込む
     fileInput.addEventListener('change', (event) => {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
           const arrayBuffer = e.target.result;
-          loader.loadPMX(arrayBuffer, (loadedModel) => {
-            // 既存のモデルを削除して新しいモデルをシーンに追加
-            if (model) {
-              scene.remove(model); // 古いモデルを削除
-            }
-            model = loadedModel;
+          loader.loadPMX(arrayBuffer, (model) => {
+            scene.clear();  // 既存のモデルを削除
             scene.add(model);
-            model.scale.set(0.01, 0.01, 0.01);  // 新しいモデルのスケール調整
+            model.scale.set(0.01, 0.01, 0.01);  // モデルのスケール調整
           });
         };
         reader.readAsArrayBuffer(file);  // ファイルをArrayBufferとして読み込む
       }
     });
 
-    // カメラの位置設定
-    camera.position.z = 5;
-
     // アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
-      if (model) {
-        // モデルにアニメーションがある場合、アニメーションの更新処理を行う
-        if (model.mmdAnimations) {
-          model.mmdAnimations.forEach((animation) => {
-            animation.update(0.016); // アニメーションの更新
-          });
-        }
-      }
       renderer.render(scene, camera);
     }
     animate();
