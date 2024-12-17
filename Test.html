@@ -32,6 +32,13 @@
     // カメラの位置を設定
     camera.position.z = 5;
 
+    // ウィンドウリサイズ対応
+    window.addEventListener('resize', function () {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
+
     // アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
