@@ -3,69 +3,56 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Model with Three.js</title>
+  <title>3D Model Test</title>
   <style>
-    body { margin: 0; overflow: hidden; }
+    body { margin: 0; }
     canvas { display: block; }
   </style>
 </head>
 <body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js/examples/js/loaders/MMDLoader.js"></script>
-
   <script>
-    // 3Dシーンの設定
+    // シーンの作成
     const scene = new THREE.Scene();
+    
+    // カメラの作成
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    
+    // レンダラーの作成
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // ライトの設定
-    const light = new THREE.AmbientLight(0xffffff, 1); // 環境光
+    // 照明の追加
+    const light = new THREE.AmbientLight(0xffffff);
     scene.add(light);
 
-    // カメラの初期位置
+    // カメラの位置設定
     camera.position.z = 5;
 
-    // MMDLoaderを使用してPMXファイルを読み込む
+    // MMDLoaderを使ってPMXモデルを読み込む
     const loader = new THREE.MMDLoader();
-
     loader.load(
-      'models/inubashiri/P/Œ¢‘– Š‘v1.0a.pmx',  // PMXファイルのパス
+      'models/inubashiri.pmx',  // モデルファイルのパス
       function (model) {
-        // モデルが読み込まれたときの処理
-        console.log("モデル読み込み成功!");
+        console.log('モデルが読み込まれました');
         scene.add(model);
-
-        // モデルの位置調整（必要に応じて）
-        model.position.set(0, -1.5, 0);  // モデルを地面の上に配置
       },
       function (xhr) {
-        // モデルの読み込み進行状況の表示
         console.log((xhr.loaded / xhr.total * 100) + '% loaded');
       },
       function (error) {
-        // エラーハンドリング
-        console.error('モデルの読み込みに失敗しました', error);
+        console.error('エラーが発生しました:', error);
       }
     );
 
     // アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
-
-      // シーンの描画
       renderer.render(scene, camera);
     }
     animate();
-
-    // ウィンドウのリサイズに対応
-    window.addEventListener('resize', function () {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-    });
   </script>
 </body>
 </html>
