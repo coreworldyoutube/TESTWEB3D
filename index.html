@@ -7,6 +7,7 @@
   <style>
     body { margin: 0; }
     canvas { display: block; }
+    body { background-color: black; } /* 背景を黒に設定 */
   </style>
 </head>
 <body>
@@ -20,30 +21,30 @@
   <script src="https://cdn.jsdelivr.net/npm/three-mmd-loader@0.1.7/dist/three-mmd-loader.min.js"></script>
 
   <script>
-    // ここに前述したJavaScriptコードを書きます
     // シーン、カメラ、レンダラーの設定
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-    // WebGLレンダラーの設定
     const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('webgl-canvas') });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
+    // 背景色を黒に設定
+    scene.background = new THREE.Color(0x000000); // 背景を黒に設定
+
     // ライトの設定
-    scene.add(new THREE.AmbientLight(0x404040, 1)); // 環境光
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(5, 5, 5).normalize(); // 方向光
+    scene.add(new THREE.AmbientLight(0x404040, 2)); // 環境光の強さを2に変更
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2); // 方向光の強さを2に変更
+    directionalLight.position.set(5, 5, 5).normalize(); 
     scene.add(directionalLight);
 
     // MMDモデルの読み込み
     const loader = new THREE.MMDLoader();
     loader.load('models/inubashiri.pmx', (model) => {
       scene.add(model);
-      model.scale.set(0.01, 0.01, 0.01); // モデルのスケールを調整
-      model.position.set(0, -1, 0); // 必要ならモデルの位置も調整
+      model.scale.set(0.1, 0.1, 0.1); // スケールを調整
+      model.position.set(0, -1, 0); // モデルの位置調整
     }, undefined, (error) => {
-      console.error('Error loading the model:', error); // エラーハンドリング
+      console.error('Error loading the model:', error); 
     });
 
     // カメラの位置設定
@@ -57,7 +58,7 @@
 
     animate();
 
-    // ウィンドウサイズ変更時にレンダラーとカメラの設定を更新
+    // ウィンドウサイズ変更時の設定
     window.addEventListener('resize', () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight;
