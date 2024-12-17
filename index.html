@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Cube with Textures and Controls</title>
+  <title>FPS-Like Movement</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -12,100 +12,76 @@
 <body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-    // 1. シーン、カメラ、レンダラーの作成
+    // シーン、カメラ、レンダラーの作成
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // 2. テクスチャをロード
+    // キューブの作成（6面にテクスチャ）
     const loader = new THREE.TextureLoader();
-    const textures = [
-      loader.load('meow.png'),  // 正面
-      loader.load('meow.png'),  // 背面
-      loader.load('meow.png'),  // 上面
-      loader.load('meow.png'),  // 底面
-      loader.load('meow.png'),  // 右面
-      loader.load('meow.png')   // 左面
-    ];
-
-    // 3. 立方体のジオメトリを作成
-    const geometry = new THREE.BoxGeometry(2, 2, 2);
-
-    // 4. 各面に対応するテクスチャを設定
+    const textures = Array(6).fill(loader.load('meow.png'));
     const materials = textures.map(texture => new THREE.MeshBasicMaterial({ map: texture }));
-
-    // 5. 立方体のメッシュを作成
-    const cube = new THREE.Mesh(geometry, materials);
+    const cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), materials);
     scene.add(cube);
 
-    // 6. カメラの位置設定
+    // カメラの初期位置
     camera.position.set(0, 1, 5);
 
-    // 7. 移動速度や回転速度
-    const moveSpeed = 0.1;  // 歩行速度
-    const rotationSpeed = 0.05;  // 回転速度
+    // キー入力管理
+    const keys = { w: false, a: false, s: false, d: false, arrowLeft: false, arrowRight: false };
 
-    // 8. キー入力の管理
-    const keys = {
-      w: false, a: false, s: false, d: false,
-      arrowUp: false, arrowDown: false, arrowLeft: false, arrowRight: false
-    };
-
-    // 9. キーが押されたときの処理
-    window.addEventListener('keydown', (event) => {
-      if (event.key === 'w') keys.w = true;
-      if (event.key === 'a') keys.a = true;
-      if (event.key === 's') keys.s = true;
-      if (event.key === 'd') keys.d = true;
-
-      if (event.key === 'ArrowUp') keys.arrowUp = true;
-      if (event.key === 'ArrowDown') keys.arrowDown = true;
-      if (event.key === 'ArrowLeft') keys.arrowLeft = true;
-      if (event.key === 'ArrowRight') keys.arrowRight = true;
+    window.addEventListener('keydown', (e) => {
+      keys[e.key.toLowerCase()] = true;
     });
 
-    // 10. キーが離されたときの処理
-    window.addEventListener('keyup', (event) => {
-      if (event.key === 'w') keys.w = false;
-      if (event.key === 'a') keys.a = false;
-      if (event.key === 's') keys.s = false;
-      if (event.key === 'd') keys.d = false;
-
-      if (event.key === 'ArrowUp') keys.arrowUp = false;
-      if (event.key === 'ArrowDown') keys.arrowDown = false;
-      if (event.key === 'ArrowLeft') keys.arrowLeft = false;
-      if (event.key === 'ArrowRight') keys.arrowRight = false;
+    window.addEventListener('keyup', (e) => {
+      keys[e.key.toLowerCase()] = false;
     });
 
-    // 11. アニメーションループ
+    // 移動・回転速度
+    const moveSpeed = 0.1;       // 移動速度
+    const rotationSpeed = 0.02;  // 回転速度
+
+    // アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
-      // 12. 視点の回転（矢印キー）
-      if (keys.arrowUp) camera.rotation.x -= rotationSpeed;  // 上
-      if (keys.arrowDown) camera.rotation.x += rotationSpeed;  // 下
-      if (keys.arrowLeft) camera.rotation.y -= rotationSpeed;  // 左
-      if (keys.arrowRight) camera.rotation.y += rotationSpeed;  // 右
+      // カメラの向き（前後移動用ベクトル）
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction);
 
-      // 13. カメラの移動（WASD）
-      if (keys.w) camera.position.z -= moveSpeed;  // 前
-      if (keys.s) camera.position.z += moveSpeed;  // 後
-      if (keys.a) camera.position.x -= moveSpeed;  // 左
-      if (keys.d) camera.position.x += moveSpeed;  // 右
+      // 移動処理
+      if (keys.w) {
+        camera.position.addScaledVector(direction, moveSpeed); // 前進
+      }
+      if (keys.s) {
+        camera.position.addScaledVector(direction, -moveSpeed); // 後退
+      }
+      if (keys.a) {
+        camera.position.x -= Math.cos(camera.rotation.y) * moveSpeed;
+        camera.position.z -= Math.sin(camera.rotation.y) * moveSpeed; // 左
+      }
+      if (keys.d) {
+        camera.position.x += Math.cos(camera.rotation.y) * moveSpeed;
+        camera.position.z += Math.sin(camera.rotation.y) * moveSpeed; // 右
+      }
 
-      // 14. 立方体を回転させる
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
+      // 視点の回転処理（左右のみ）
+      if (keys.arrowLeft) {
+        camera.rotation.y += rotationSpeed; // 左回転
+      }
+      if (keys.arrowRight) {
+        camera.rotation.y -= rotationSpeed; // 右回転
+      }
 
-      // 15. レンダリング
       renderer.render(scene, camera);
     }
 
     animate();
 
-    // 16. ウィンドウリサイズ対応
+    // ウィンドウリサイズ対応
     window.addEventListener('resize', () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight;
