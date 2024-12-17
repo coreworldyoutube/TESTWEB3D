@@ -1,74 +1,56 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D MMD Model Viewer</title>
-  <style>
-    body { margin: 0; }
-    canvas { display: block; }
-  </style>
-</head>
-<body>
-  <!-- Three.jsのライブラリ -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <!-- MMDLoader.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/loaders/MMDLoader.js"></script>
+<script>
+  // シーン、カメラ、レンダラーの設定
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
-  <script>
-    // シーン、カメラ、レンダラーの設定
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+  // モデルローダー
+  const loader = new THREE.MMDLoader();
 
-    // モデルローダー
-    const loader = new THREE.MMDLoader();
+  // モデルの読み込み
+  loader.load(
+    'models/inubashiri_P/inubashiri_P_v1.0a.pmx',  // PMXモデルのファイルパス
+    function (model) {
+      console.log("モデル読み込み成功!");
+      scene.add(model);
 
-    // モデルの読み込み
-    loader.load(
-      'models/inubashiri_P_v1.0a.pmx',  // PMXモデルのファイルパス
-      function (model) {
-        scene.add(model);
+      // モデルの位置調整（必要に応じて）
+      model.position.set(0, -1.5, 0);  // モデルを地面の上に配置
 
-        // モデルの位置調整（必要に応じて）
-        model.position.set(0, -1.5, 0);  // モデルを地面の上に配置
-
-        // アニメーションの設定（オプション）
-        const animation = new THREE.AnimationMixer(model);
-        // 必要に応じてアニメーションを追加する
-      },
-      function (xhr) {
-        console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-      },
-      function (error) {
-        console.error('An error happened', error);
-      }
-    );
-
-    // カメラの位置調整
-    camera.position.z = 5;
-
-    // アニメーションループ
-    function animate() {
-      requestAnimationFrame(animate);
-
-      // 必要に応じて回転などのアニメーションを追加
-      scene.rotation.y += 0.01;
-
-      // 描画
-      renderer.render(scene, camera);
+      // アニメーションの設定（オプション）
+      const animation = new THREE.AnimationMixer(model);
+      // 必要に応じてアニメーションを追加する
+    },
+    function (xhr) {
+      console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+    },
+    function (error) {
+      console.error('An error happened', error);
     }
+  );
 
-    animate();
+  // カメラの位置調整
+  camera.position.z = 5;
 
-    // ウィンドウサイズ変更に対応
-    window.addEventListener('resize', function () {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-    });
-  </script>
-</body>
-</html>
+  // アニメーションループ
+  function animate() {
+    requestAnimationFrame(animate);
+
+    // 必要に応じて回転などのアニメーションを追加
+    scene.rotation.y += 0.01;
+
+    // 描画
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  // ウィンドウサイズ変更に対応
+  window.addEventListener('resize', function () {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+</script>
