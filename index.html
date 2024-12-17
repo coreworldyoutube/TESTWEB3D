@@ -1,64 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MMD Model Test</title>
-  <style>
-    body { margin: 0; }
-    canvas { display: block; }
-    body {
-      background-color: #2e2e2e; /* 背景をダークグレー */
-    }
-  </style>
-</head>
-<body>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js/examples/js/loaders/MMDLoader.js"></script>
-  <script>
-    // シーンの作成
-    const scene = new THREE.Scene();
-    
-    // カメラの作成
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    
-    // レンダラーの作成
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+// シーン、カメラ、レンダラーの設定
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('webgl-canvas') });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-    // 照明の追加
-    const light = new THREE.AmbientLight(0xffffff, 0.5);  // 周囲光
-    scene.add(light);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1); // 方向性光源
-    directionalLight.position.set(1, 1, 1).normalize();
-    scene.add(directionalLight);
+// ライトの設定
+scene.add(new THREE.AmbientLight(0x404040, 1));
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight.position.set(5, 5, 5).normalize();
+scene.add(directionalLight);
 
-    // カメラの位置設定
-    camera.position.z = 5;
+// MMDモデルの読み込み
+const loader = new THREE.MMDLoader();
+loader.load('models/inubashiri.pmx', (model) => {
+  scene.add(model);
+  model.scale.set(0.01, 0.01, 0.01);
+}, undefined, (error) => console.error(error));
 
-    // MMDLoaderを使ってPMXモデルを読み込む
-    const loader = new THREE.MMDLoader();
-    loader.load(
-      'models/inubashiri.pmx',  // PMXモデルファイルのパス
-      function (model) {
-        console.log('モデルが読み込まれました');
-        scene.add(model);
-      },
-      function (xhr) {
-        console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-      },
-      function (error) {
-        console.error('エラーが発生しました:', error);
-      }
-    );
+// カメラ位置設定
+camera.position.z = 5;
 
-    // アニメーションループ
-    function animate() {
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
-    }
-    animate();
-  </script>
-</body>
-</html>
+// アニメーションループ
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+animate();
+
+// ウィンドウリサイズ対応
+window.addEventListener('resize', () => {
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+});
