@@ -3,70 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MMD Model Viewer</title>
+  <title>3D Game Example with Three.js</title>
   <style>
     body { margin: 0; }
     canvas { display: block; }
   </style>
 </head>
 <body>
-  <!-- ここでファイルアップロード -->
-  <input type="file" id="fileInput" accept=".pmx" />
-  
-  <!-- 3D描画用のキャンバス -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three-mmd-loader@1.0.0/dist/three-mmd-loader.js"></script>
   <script>
-    // シーンの設定
+    // シーンの作成
     const scene = new THREE.Scene();
+
+    // カメラの作成
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+    // レンダラーの作成
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // ライトの設定
-    scene.add(new THREE.AmbientLight(0x404040, 1));  // 周囲光
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);  // 方向光
-    directionalLight.position.set(5, 5, 5).normalize();
-    scene.add(directionalLight);
+    // 立方体ジオメトリとマテリアルを使ってメッシュを作成
+    const geometry = new THREE.BoxGeometry();
+    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const cube = new THREE.Mesh(geometry, material);
+    scene.add(cube);
 
-    // カメラの設定
+    // カメラの位置を設定
     camera.position.z = 5;
 
-    // ファイルの読み込み処理
-    const fileInput = document.getElementById('fileInput');
-    const loader = new THREE.MMDLoader();
-
-    // PMXファイルを選択して読み込む
-    fileInput.addEventListener('change', (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const arrayBuffer = e.target.result;
-          loader.loadPMX(arrayBuffer, (model) => {
-            scene.clear();  // 既存のモデルを削除
-            scene.add(model);
-            model.scale.set(0.01, 0.01, 0.01);  // モデルのスケール調整
-          });
-        };
-        reader.readAsArrayBuffer(file);  // ファイルをArrayBufferとして読み込む
-      }
+    // ウィンドウリサイズ対応
+    window.addEventListener('resize', function () {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
     });
 
     // アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
+
+      // 立方体を回転させる
+      cube.rotation.x += 0.01;
+      cube.rotation.y += 0.01;
+
+      // シーンを描画
       renderer.render(scene, camera);
     }
-    animate();
 
-    // ウィンドウリサイズ対応
-    window.addEventListener('resize', () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-    });
+    animate();
   </script>
 </body>
 </html>
