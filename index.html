@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Model Test</title>
+  <title>MMD Model Test</title>
   <style>
     body { margin: 0; }
     canvas { display: block; }
     body {
-      background-color: #2e2e2e; /* 背景を黒に変更 */
+      background-color: #2e2e2e; /* 背景をダークグレー */
     }
   </style>
 </head>
@@ -40,21 +40,9 @@
     // MMDLoaderを使ってPMXモデルを読み込む
     const loader = new THREE.MMDLoader();
     loader.load(
-      'models/inubashiri.pmx',  // モデルファイルのパス
+      'models/inubashiri.pmx',  // PMXモデルファイルのパス
       function (model) {
         console.log('モデルが読み込まれました');
-        
-        // モデルのマテリアルを反射のあるものに変更
-        model.traverse(function (child) {
-          if (child instanceof THREE.Mesh) {
-            child.material = new THREE.MeshStandardMaterial({
-              color: 0x888888, // グレー色
-              roughness: 0.5, // 反射具合
-              metalness: 0.1  // 金属感
-            });
-          }
-        });
-
         scene.add(model);
       },
       function (xhr) {
