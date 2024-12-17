@@ -3,69 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D MMD Model Viewer</title>
+  <title>3D Model with Three.js</title>
   <style>
-    body { margin: 0; }
+    body { margin: 0; overflow: hidden; }
     canvas { display: block; }
   </style>
 </head>
 <body>
-  <!-- Three.jsのライブラリ -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r110/three.min.js"></script>
-
-  <!-- MMDLoader.js -->
-  <script src="js/MMDLoader.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js/examples/js/loaders/MMDLoader.js"></script>
 
   <script>
-    // シーン、カメラ、レンダラーの設定
+    // 3Dシーンの設定
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // モデルローダー
+    // ライトの設定
+    const light = new THREE.AmbientLight(0xffffff, 1); // 環境光
+    scene.add(light);
+
+    // カメラの初期位置
+    camera.position.z = 5;
+
+    // MMDLoaderを使用してPMXファイルを読み込む
     const loader = new THREE.MMDLoader();
 
-    // モデルの読み込み
     loader.load(
-      'models/inubashiri_P/inubashiri_P_v1.0a.pmx',  // PMXモデルのファイルパス
+      'models/inubashiri/P/Œ¢‘– Š‘v1.0a.pmx',  // PMXファイルのパス
       function (model) {
+        // モデルが読み込まれたときの処理
         console.log("モデル読み込み成功!");
         scene.add(model);
 
         // モデルの位置調整（必要に応じて）
         model.position.set(0, -1.5, 0);  // モデルを地面の上に配置
-
-        // アニメーションの設定（オプション）
-        const animation = new THREE.AnimationMixer(model);
-        // 必要に応じてアニメーションを追加する
       },
       function (xhr) {
+        // モデルの読み込み進行状況の表示
         console.log((xhr.loaded / xhr.total * 100) + '% loaded');
       },
       function (error) {
-        console.error('An error happened', error);
+        // エラーハンドリング
+        console.error('モデルの読み込みに失敗しました', error);
       }
     );
-
-    // カメラの位置調整
-    camera.position.z = 5;
 
     // アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
-      // 必要に応じて回転などのアニメーションを追加
-      scene.rotation.y += 0.01;
-
-      // 描画
+      // シーンの描画
       renderer.render(scene, camera);
     }
-
     animate();
 
-    // ウィンドウサイズ変更に対応
+    // ウィンドウのリサイズに対応
     window.addEventListener('resize', function () {
       renderer.setSize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight;
