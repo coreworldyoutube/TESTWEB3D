@@ -1,36 +1,68 @@
-// シーン、カメラ、レンダラーの設定
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('webgl-canvas') });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D MMD Model Viewer</title>
+  <style>
+    body { margin: 0; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <!-- WebGLのレンダリング用のcanvas -->
+  <canvas id="webgl-canvas"></canvas>
 
-// ライトの設定
-scene.add(new THREE.AmbientLight(0x404040, 1));
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(5, 5, 5).normalize();
-scene.add(directionalLight);
+  <!-- Three.jsのライブラリの読み込み -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <!-- MMDLoaderの読み込み -->
+  <script src="https://cdn.jsdelivr.net/npm/three-mmd-loader@0.1.7/dist/three-mmd-loader.min.js"></script>
 
-// MMDモデルの読み込み
-const loader = new THREE.MMDLoader();
-loader.load('models/inubashiri.pmx', (model) => {
-  scene.add(model);
-  model.scale.set(0.01, 0.01, 0.01);
-}, undefined, (error) => console.error(error));
+  <script>
+    // ここに前述したJavaScriptコードを書きます
+    // シーン、カメラ、レンダラーの設定
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-// カメラ位置設定
-camera.position.z = 5;
+    // WebGLレンダラーの設定
+    const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('webgl-canvas') });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-// アニメーションループ
-function animate() {
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera);
-}
-animate();
+    // ライトの設定
+    scene.add(new THREE.AmbientLight(0x404040, 1)); // 環境光
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 5, 5).normalize(); // 方向光
+    scene.add(directionalLight);
 
-// ウィンドウリサイズ対応
-window.addEventListener('resize', () => {
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-});
+    // MMDモデルの読み込み
+    const loader = new THREE.MMDLoader();
+    loader.load('models/inubashiri.pmx', (model) => {
+      scene.add(model);
+      model.scale.set(0.01, 0.01, 0.01); // モデルのスケールを調整
+      model.position.set(0, -1, 0); // 必要ならモデルの位置も調整
+    }, undefined, (error) => {
+      console.error('Error loading the model:', error); // エラーハンドリング
+    });
+
+    // カメラの位置設定
+    camera.position.z = 5;
+
+    // アニメーションループ
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // ウィンドウサイズ変更時にレンダラーとカメラの設定を更新
+    window.addEventListener('resize', () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
+  </script>
+</body>
+</html>
