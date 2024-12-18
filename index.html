@@ -59,10 +59,10 @@
     });
 
     // 7. カメラ回転の速度
-    const rotationSpeed = -0.12;
+    const rotationSpeed = -0.09;
 
     // 8. カメラ移動の速度
-    const moveSpeed = 0.12;
+    const moveSpeed = 0.09;
 
     // 9. アニメーションループ
     function animate() {
@@ -73,30 +73,40 @@
       // 現在向いている方向に従って移動
       if (keys.w) camera.position.addScaledVector(direction, moveSpeed);  // 前方移動
       if (keys.s) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
+      
       // 左右方向の計算（進行方向とカメラの上方向の外積）
       const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
       const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
-      
+
       if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
       if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
-      
+
       // カメラ回転（矢印キー）
-      if (keys.ArrowUp) camera.rotation.x -= rotationSpeed; // 上回転（首を挙げる）
-      if (keys.ArrowDown) camera.rotation.x += rotationSpeed; // 下回転（首を下げる）
+      if (keys.ArrowUp) {
+
+      // 上回転（首を挙げる）
+        if (camera.rotation.x > -Math.PI / 2) {
+          camera.rotation.x -= rotationSpeed;
+        }
+      }
+      if (keys.ArrowDown) {
+        // 下回転（首を下げる）
+        if (camera.rotation.x < Math.PI / 2) {
+          camera.rotation.x += rotationSpeed;
+        }
+      }
       
-      // x軸回転を制限して、首が極端に回りすぎないようにする（-90度から90度）
-      camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x)); // 上下制限
-      
-      // 左右回転はカメラの向き（y軸回転）に合わせて行う
+      // 左右回転（y軸回転）
       if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左回転
       if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右回転
       
       // Z軸回転を無効化
       camera.rotation.z = 0;
-     
+
       // シーンをレンダリング
       renderer.render(scene, camera);
     }
+
 
 
 
