@@ -70,11 +70,11 @@
       // カメラ移動（WASDキー）
       const direction = new THREE.Vector3();
       camera.getWorldDirection(direction); // 現在のカメラの進行方向を取得
-      
+
       // 移動処理（WASDキー）
       if (keys.w) camera.position.addScaledVector(direction, moveSpeed);  // 前方移動
       if (keys.s) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
-      
+
       // 左右方向の計算（進行方向とカメラの上方向の外積）
       const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
       const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
@@ -82,7 +82,7 @@
       if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
       if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
 
-      // クォータニオンを使ったカメラ回転（上下回転）
+      // 上下回転（ピッチ）
       if (keys.ArrowUp) {
         camera.rotation.x -= rotationSpeed;
         if (camera.rotation.x < -Math.PI / 2) camera.rotation.x = -Math.PI / 2; // 上限設定
@@ -92,7 +92,7 @@
         if (camera.rotation.x > Math.PI / 2) camera.rotation.x = Math.PI / 2; // 下限設定
       }
 
-      // クォータニオンを使ったカメラ回転（左右回転）
+      // 左右回転（ヨー）
       if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左回転
       if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右回転
 
