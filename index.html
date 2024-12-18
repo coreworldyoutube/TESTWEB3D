@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>平面マップ</title>
+  <title>平面マップ - ブロック設置</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -11,7 +11,6 @@
 </head>
 <body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="mapGenerator.js"></script> <!-- 別ファイルでマップ生成を管理 -->
   <script>
     // 1. シーン、カメラ、レンダラーのセットアップ
     const scene = new THREE.Scene();
@@ -23,13 +22,17 @@
     // 2. カメラの初期位置設定
     camera.position.set(0, 5, 10); // Z軸方向に少し後ろに配置
 
-    // 3. マップを生成
+    // 3. テクスチャを用意
+    const loader = new THREE.TextureLoader();
+    const blockTexture = loader.load('meow.png');  // テクスチャのパスを設定
+
+    // 4. マップを生成
     const width = 10;
     const height = 10;
     const blockSize = 2;
-    const blocks = generateMap(scene, width, height, blockSize);
+    const blocks = generateMap(scene, width, height, blockSize, blockTexture);
 
-    // 4. キー入力管理
+    // 5. キー入力管理
     const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
     window.addEventListener('keydown', (event) => {
@@ -39,7 +42,7 @@
       keys[event.key] = false;
     });
 
-    // 5. アニメーションループとカメラ移動
+    // 6. アニメーションループとカメラ移動
     const moveSpeed = 0.1;
     
     function animate() {
@@ -56,6 +59,22 @@
     }
 
     animate();
+
+    // マップ生成関数
+    function generateMap(scene, width, height, blockSize, texture) {
+      const blocks = [];
+      for (let x = 0; x < width; x++) {
+        for (let z = 0; z < height; z++) {
+          const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
+          const material = new THREE.MeshBasicMaterial({ map: texture });
+          const block = new THREE.Mesh(geometry, material);
+          block.position.set(x * blockSize, blockSize / 2, z * blockSize); // すべて同じ高さに並べる
+          scene.add(block);
+          blocks.push(block);
+        }
+      }
+      return blocks;
+    }
   </script>
 </body>
 </html>
