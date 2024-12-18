@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>平面マップ - ブロック設置</title>
+  <title>平面マップ - カメラ移動と回転</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -24,7 +24,7 @@
 
     // 3. テクスチャを用意
     const loader = new THREE.TextureLoader();
-    const blockTexture = loader.load('meow.png');  // テクスチャのパスを設定
+    const blockTexture = loader.load('your_texture.png');  // テクスチャのパスを設定
 
     // 4. マップを生成
     const width = 10;
@@ -42,9 +42,12 @@
       keys[event.key] = false;
     });
 
-    // 6. アニメーションループとカメラ移動
+    // 6. カメラの回転速度
+    const rotationSpeed = 0.02;  // 回転速度
+
+    // 7. アニメーションループとカメラ移動・回転
     const moveSpeed = 0.1;
-    
+
     function animate() {
       requestAnimationFrame(animate);
 
@@ -53,6 +56,12 @@
       if (keys.s) camera.position.z += moveSpeed; // 後方移動
       if (keys.a) camera.position.x -= moveSpeed; // 左方向移動
       if (keys.d) camera.position.x += moveSpeed; // 右方向移動
+
+      // 視点の回転（矢印キー）
+      if (keys.ArrowUp) camera.rotation.x -= rotationSpeed;   // 上
+      if (keys.ArrowDown) camera.rotation.x += rotationSpeed; // 下
+      if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左
+      if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右
 
       // シーンをレンダリング
       renderer.render(scene, camera);
