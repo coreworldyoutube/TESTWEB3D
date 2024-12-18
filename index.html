@@ -21,7 +21,6 @@
 
     // 2. カメラの初期位置設定
     camera.position.set(0, 5, 10); // 初期位置は少し後ろ
-    camera.rotation.set(0, 0, 0);  // 回転を初期化
 
     // 3. テクスチャをロード（6つの面のテクスチャを指定）
     const loader = new THREE.TextureLoader();
@@ -59,7 +58,7 @@
     });
 
     // 7. カメラ回転の速度
-    const rotationSpeed = -0.09;
+    const rotationSpeed = 0.03;
 
     // 8. カメラ移動の速度
     const moveSpeed = 0.09;
@@ -67,7 +66,7 @@
     // 9. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
-      
+
       // カメラ移動（WASDキー）
       const direction = new THREE.Vector3();
       camera.getWorldDirection(direction); // 現在のカメラの進行方向を取得
@@ -83,26 +82,19 @@
       if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
       if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
 
-      // カメラ回転（矢印キー）
+      // クォータニオンを使ったカメラ回転（上下回転）
       if (keys.ArrowUp) {
-        // 上回転（首を挙げる）
-        if (camera.rotation.x > -Math.PI / 2) {
-          camera.rotation.x -= rotationSpeed;
-        }
+        camera.rotation.x -= rotationSpeed;
+        if (camera.rotation.x < -Math.PI / 2) camera.rotation.x = -Math.PI / 2; // 上限設定
       }
       if (keys.ArrowDown) {
-        // 下回転（首を下げる）
-        if (camera.rotation.x < Math.PI / 2) {
-          camera.rotation.x += rotationSpeed;
-        }
+        camera.rotation.x += rotationSpeed;
+        if (camera.rotation.x > Math.PI / 2) camera.rotation.x = Math.PI / 2; // 下限設定
       }
 
-      // 左右回転（y軸回転）
+      // クォータニオンを使ったカメラ回転（左右回転）
       if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左回転
       if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右回転
-      
-      // Z軸回転を無効化
-      camera.rotation.z = 0;
 
       // シーンをレンダリング
       renderer.render(scene, camera);
