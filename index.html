@@ -24,15 +24,23 @@
 
     // 3. テクスチャを用意
     const loader = new THREE.TextureLoader();
-    const blockTexture = loader.load('your_texture.png');  // テクスチャのパスを設定
+    const blockTexture = loader.load('your_texture.png');  // あなたのテクスチャ画像に置き換えてください
 
-    // 4. マップを生成
+    // 4. ライトの追加
+    const light = new THREE.PointLight(0xffffff, 1, 100);
+    light.position.set(0, 10, 0); // ライトの位置
+    scene.add(light);
+
+    const ambientLight = new THREE.AmbientLight(0x404040, 1);  // 環境光を追加して、影をやわらげます
+    scene.add(ambientLight);
+
+    // 5. マップを生成
     const width = 10;
     const height = 10;
     const blockSize = 2;
     const blocks = generateMap(scene, width, height, blockSize, blockTexture);
 
-    // 5. キー入力管理
+    // 6. キー入力管理
     const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
     window.addEventListener('keydown', (event) => {
@@ -42,10 +50,10 @@
       keys[event.key] = false;
     });
 
-    // 6. カメラの回転速度
+    // 7. カメラの回転速度
     const rotationSpeed = 0.02;  // 回転速度
 
-    // 7. アニメーションループとカメラ移動・回転
+    // 8. アニメーションループとカメラ移動・回転
     const moveSpeed = 0.1;
 
     function animate() {
@@ -75,7 +83,7 @@
       for (let x = 0; x < width; x++) {
         for (let z = 0; z < height; z++) {
           const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
-          const material = new THREE.MeshBasicMaterial({ map: texture });
+          const material = new THREE.MeshStandardMaterial({ map: texture });  // 光を受けるマテリアルに変更
           const block = new THREE.Mesh(geometry, material);
           block.position.set(x * blockSize, blockSize / 2, z * blockSize); // すべて同じ高さに並べる
           scene.add(block);
@@ -84,6 +92,13 @@
       }
       return blocks;
     }
+
+    // 9. ウィンドウサイズが変更された場合に対応
+    window.addEventListener('resize', () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
   </script>
 </body>
 </html>
