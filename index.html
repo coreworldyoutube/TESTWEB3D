@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>平面マップ - カメラ移動と回転</title>
+  <title>マインクラフト風地平線</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -20,25 +20,33 @@
     document.body.appendChild(renderer.domElement);
 
     // 2. カメラの初期位置設定
-    camera.position.set(0, 5, 10); // Z軸方向に少し後ろに配置
+    camera.position.set(0, 5, 10); // 初期位置は少し後ろ
+    camera.rotation.set(0, 0, 0);  // 回転を初期化
 
-    // 3. テクスチャを用意
+    // 3. テクスチャをロード（6つの面のテクスチャを指定）
     const loader = new THREE.TextureLoader();
-    const blockTexture = loader.load('your_texture.png');  // あなたのテクスチャ画像に置き換えてください
+    const textures = [
+      loader.load('meow.png'),  // 正面
+      loader.load('meow.png'),   // 背面
+      loader.load('meow.png'),    // 上面
+      loader.load('meow.png'), // 底面
+      loader.load('meow.png'),  // 右面
+      loader.load('meow.png')    // 左面
+    ];
 
     // 4. ライトの追加
     const light = new THREE.PointLight(0xffffff, 1, 100);
-    light.position.set(0, 10, 0); // ライトの位置
+    light.position.set(0, 50, 0); // ライトの位置
     scene.add(light);
 
-    const ambientLight = new THREE.AmbientLight(0x404040, 1);  // 環境光を追加して、影をやわらげます
+    const ambientLight = new THREE.AmbientLight(0x404040, 1);  // 環境光を追加して影をやわらげる
     scene.add(ambientLight);
 
-    // 5. マップを生成
-    const width = 10;
-    const height = 10;
+    // 5. 地平線を生成する（1ブロックずつ配置）
     const blockSize = 2;
-    const blocks = generateMap(scene, width, height, blockSize, blockTexture);
+    const horizonWidth = 20;
+    const horizonDepth = 20;
+    generateHorizon(scene, horizonWidth, horizonDepth, blockSize, textures);
 
     // 6. キー入力管理
     const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
@@ -50,22 +58,30 @@
       keys[event.key] = false;
     });
 
-    // 7. カメラの回転速度
-    const rotationSpeed = 0.02;  // 回転速度
+    // 7. カメラ回転の速度
+    const rotationSpeed = 0.02;
 
-    // 8. アニメーションループとカメラ移動・回転
+    // 8. カメラ移動の速度
     const moveSpeed = 0.1;
 
+    // 9. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
-      // カメラ移動（WASDキー）: 平面に沿った移動
-      if (keys.w) camera.position.z -= moveSpeed; // 前方移動
-      if (keys.s) camera.position.z += moveSpeed; // 後方移動
-      if (keys.a) camera.position.x -= moveSpeed; // 左方向移動
-      if (keys.d) camera.position.x += moveSpeed; // 右方向移動
+      // カメラ移動（WASDキー）: カメラの進行方向に移動
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction); // カメラの向いている方向を取得
 
-      // 視点の回転（矢印キー）
+      if (keys.w) camera.position.addScaledVector(direction, moveSpeed); // 前方移動
+      if (keys.s) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
+
+      const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
+      const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
+
+      if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
+      if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
+
+      // カメラ回転（矢印キー）
       if (keys.ArrowUp) camera.rotation.x -= rotationSpeed;   // 上
       if (keys.ArrowDown) camera.rotation.x += rotationSpeed; // 下
       if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左
@@ -77,23 +93,21 @@
 
     animate();
 
-    // マップ生成関数
-    function generateMap(scene, width, height, blockSize, texture) {
-      const blocks = [];
+    // 地平線を生成する関数
+    function generateHorizon(scene, width, depth, blockSize, textures) {
       for (let x = 0; x < width; x++) {
-        for (let z = 0; z < height; z++) {
+        for (let z = 0; z < depth; z++) {
           const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
-          const material = new THREE.MeshStandardMaterial({ map: texture });  // 光を受けるマテリアルに変更
-          const block = new THREE.Mesh(geometry, material);
-          block.position.set(x * blockSize, blockSize / 2, z * blockSize); // すべて同じ高さに並べる
+          const materials = textures.map(texture => new THREE.MeshBasicMaterial({ map: texture }));
+
+          const block = new THREE.Mesh(geometry, materials);
+          block.position.set(x * blockSize, 0, z * blockSize); // 地平線のブロック配置
           scene.add(block);
-          blocks.push(block);
         }
       }
-      return blocks;
     }
 
-    // 9. ウィンドウサイズが変更された場合に対応
+    // 10. ウィンドウサイズが変更された場合に対応
     window.addEventListener('resize', () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight;
