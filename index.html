@@ -11,6 +11,7 @@
 </head>
 <body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="mapGenerator.js"></script> <!-- 別ファイルでマップ生成を管理 -->
   <script>
     // 1. シーン、カメラ、レンダラーのセットアップ
     const scene = new THREE.Scene();
@@ -19,89 +20,26 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // 2. テクスチャをロード
-    const loader = new THREE.TextureLoader();
-    const textures = [
-      loader.load('meow.png'),  // 正面
-      loader.load('meow.png'),  // 背面
-      loader.load('meow.png'),  // 上面
-      loader.load('meow.png'),  // 底面
-      loader.load('meow.png'),  // 右面
-      loader.load('meow.png')   // 左面
-    ];
-
-    // 3. キューブを作成
-    const geometry = new THREE.BoxGeometry(2, 2, 2);
-    const materials = textures.map(texture => new THREE.MeshBasicMaterial({ map: texture }));
-    const cube = new THREE.Mesh(geometry, materials);
-    scene.add(cube);
-
-    // 4. カメラの初期位置設定
+    // 2. カメラの初期位置設定
     camera.position.set(0, 1, 5);
 
-    // 5. キー入力の管理
-    const keys = { w: false, a: false, s: false, d: false, arrowUp: false, arrowDown: false, arrowLeft: false, arrowRight: false };
+    // 3. マップを生成
+    const width = 10;
+    const height = 10;
+    const blockSize = 2;
+    const blocks = generateMap(scene, width, height, blockSize);
 
-    window.addEventListener('keydown', (event) => {
-      keys[event.key.toLowerCase()] = true;
-    });
-    window.addEventListener('keyup', (event) => {
-      keys[event.key.toLowerCase()] = false;
-    });
-
-    // 6. 移動と回転速度
-    const moveSpeed = 0.1;
-    const rotationSpeed = -0.05;
-
-    // 7. アニメーションループ
+    // 4. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
-      // 視点の回転（矢印キー）
-      if (keys.arrowup) camera.rotation.x -= rotationSpeed;   // 上
-      if (keys.arrowdown) camera.rotation.x += rotationSpeed; // 下
-      if (keys.arrowleft) camera.rotation.y -= rotationSpeed; // 左
-      if (keys.arrowright) camera.rotation.y += rotationSpeed; // 右
-
-      // カメラ移動（WASDキー）
-      const direction = new THREE.Vector3();
-      camera.getWorldDirection(direction);
-
-      if (keys.w) {
-        // 前方移動
-        camera.position.addScaledVector(direction, moveSpeed);
-      }
-      if (keys.s) {
-        // 後方移動
-        camera.position.addScaledVector(direction, -moveSpeed);
-      }
-      if (keys.a) {
-        // 左方向移動（正面方向と上方向の外積で左方向を計算）
-        const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
-        camera.position.addScaledVector(left, moveSpeed);
-      }
-      if (keys.d) {
-        // 右方向移動
-        const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
-        camera.position.addScaledVector(right, moveSpeed);
-      }
-
-      // キューブの回転（装飾用）
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
+      // カメラの移動や回転などの処理
 
       // シーンをレンダリング
       renderer.render(scene, camera);
     }
 
     animate();
-
-    // 8. ウィンドウリサイズ対応
-    window.addEventListener('resize', () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-    });
   </script>
 </body>
 </html>
