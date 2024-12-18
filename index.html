@@ -63,33 +63,37 @@
 
     // 8. カメラ移動の速度
     const moveSpeed = 0.1;
-
+    
     // 9. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
-
       // カメラ移動（WASDキー）: カメラの進行方向に移動
       const direction = new THREE.Vector3();
       camera.getWorldDirection(direction); // カメラの向いている方向を取得
 
       if (keys.w) camera.position.addScaledVector(direction, moveSpeed); // 前方移動
       if (keys.s) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
-
+      
       const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
       const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
-
+      
       if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
       if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
+      
+      
+// カメラ回転（矢印キー）
+      if (keys.ArrowUp) camera.rotation.x = 0; // x軸回転無効化（強制的にゼロに）
+      if (keys.ArrowDown) camera.rotation.x = 0; // x軸回転無効化
+      if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左回転
+      if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右回転
 
-      // カメラ回転（矢印キー）
-      if (keys.ArrowUp) camera.rotation.x -= rotationSpeed;   // 上
-      if (keys.ArrowDown) camera.rotation.x += rotationSpeed; // 下
-      if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左
-      if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右
+  // Z軸回転を完全に無効化するため、常に0に設定
+      camera.rotation.z = 0;  // ここでZ回転を固定
 
-      // シーンをレンダリング
+  // シーンをレンダリング
       renderer.render(scene, camera);
     }
+
 
     animate();
 
