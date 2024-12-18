@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>嘘だ！</title>
+  <title>平面マップ</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -21,7 +21,7 @@
     document.body.appendChild(renderer.domElement);
 
     // 2. カメラの初期位置設定
-    camera.position.set(0, 1, 5);
+    camera.position.set(0, 5, 10); // Z軸方向に少し後ろに配置
 
     // 3. マップを生成
     const width = 10;
@@ -29,11 +29,27 @@
     const blockSize = 2;
     const blocks = generateMap(scene, width, height, blockSize);
 
-    // 4. アニメーションループ
+    // 4. キー入力管理
+    const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+
+    window.addEventListener('keydown', (event) => {
+      keys[event.key] = true;
+    });
+    window.addEventListener('keyup', (event) => {
+      keys[event.key] = false;
+    });
+
+    // 5. アニメーションループとカメラ移動
+    const moveSpeed = 0.1;
+    
     function animate() {
       requestAnimationFrame(animate);
 
-      // カメラの移動や回転などの処理
+      // カメラ移動（WASDキー）: 平面に沿った移動
+      if (keys.w) camera.position.z -= moveSpeed; // 前方移動
+      if (keys.s) camera.position.z += moveSpeed; // 後方移動
+      if (keys.a) camera.position.x -= moveSpeed; // 左方向移動
+      if (keys.d) camera.position.x += moveSpeed; // 右方向移動
 
       // シーンをレンダリング
       renderer.render(scene, camera);
