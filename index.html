@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FPS-Like Movement</title>
+  <title>3D Cube with Player Controls</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -12,76 +12,91 @@
 <body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-    // シーン、カメラ、レンダラーの作成
+    // 1. シーン、カメラ、レンダラーのセットアップ
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // キューブの作成（6面にテクスチャ）
+    // 2. テクスチャをロード
     const loader = new THREE.TextureLoader();
-    const textures = Array(6).fill(loader.load('meow.png'));
+    const textures = [
+      loader.load('meow.png'),  // 正面
+      loader.load('meow.png'),  // 背面
+      loader.load('meow.png'),  // 上面
+      loader.load('meow.png'),  // 底面
+      loader.load('meow.png'),  // 右面
+      loader.load('meow.png')   // 左面
+    ];
+
+    // 3. キューブを作成
+    const geometry = new THREE.BoxGeometry(2, 2, 2);
     const materials = textures.map(texture => new THREE.MeshBasicMaterial({ map: texture }));
-    const cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), materials);
+    const cube = new THREE.Mesh(geometry, materials);
     scene.add(cube);
 
-    // カメラの初期位置
+    // 4. カメラの初期位置設定
     camera.position.set(0, 1, 5);
 
-    // キー入力管理
-    const keys = { w: false, a: false, s: false, d: false, arrowLeft: false, arrowRight: false };
+    // 5. キー入力の管理
+    const keys = { w: false, a: false, s: false, d: false, arrowUp: false, arrowDown: false, arrowLeft: false, arrowRight: false };
 
-    window.addEventListener('keydown', (e) => {
-      keys[e.key.toLowerCase()] = true;
+    window.addEventListener('keydown', (event) => {
+      keys[event.key.toLowerCase()] = true;
+    });
+    window.addEventListener('keyup', (event) => {
+      keys[event.key.toLowerCase()] = false;
     });
 
-    window.addEventListener('keyup', (e) => {
-      keys[e.key.toLowerCase()] = false;
-    });
+    // 6. 移動と回転速度
+    const moveSpeed = 0.1;
+    const rotationSpeed = 0.05;
 
-    // 移動・回転速度
-    const moveSpeed = 0.1;       // 移動速度
-    const rotationSpeed = 0.02;  // 回転速度
-
-    // アニメーションループ
+    // 7. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
-      // カメラの向き（前後移動用ベクトル）
+      // 視点の回転（矢印キー）
+      if (keys.arrowup) camera.rotation.x -= rotationSpeed;   // 上
+      if (keys.arrowdown) camera.rotation.x += rotationSpeed; // 下
+      if (keys.arrowleft) camera.rotation.y -= rotationSpeed; // 左
+      if (keys.arrowright) camera.rotation.y += rotationSpeed; // 右
+
+      // カメラ移動（WASDキー）
       const direction = new THREE.Vector3();
       camera.getWorldDirection(direction);
 
-      // 移動処理
       if (keys.w) {
-        camera.position.addScaledVector(direction, moveSpeed); // 前進
+        // 前方移動
+        camera.position.addScaledVector(direction, moveSpeed);
       }
       if (keys.s) {
-        camera.position.addScaledVector(direction, -moveSpeed); // 後退
+        // 後方移動
+        camera.position.addScaledVector(direction, -moveSpeed);
       }
       if (keys.a) {
-        camera.position.x -= Math.cos(camera.rotation.y) * moveSpeed;
-        camera.position.z -= Math.sin(camera.rotation.y) * moveSpeed; // 左
+        // 左方向移動（正面方向と上方向の外積で左方向を計算）
+        const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
+        camera.position.addScaledVector(left, moveSpeed);
       }
       if (keys.d) {
-        camera.position.x += Math.cos(camera.rotation.y) * moveSpeed;
-        camera.position.z += Math.sin(camera.rotation.y) * moveSpeed; // 右
+        // 右方向移動
+        const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
+        camera.position.addScaledVector(right, moveSpeed);
       }
 
-      // 視点の回転処理（左右のみ）
-      if (keys.arrowLeft) {
-        camera.rotation.y += rotationSpeed; // 左回転
-      }
-      if (keys.arrowRight) {
-        camera.rotation.y -= rotationSpeed; // 右回転
-      }
+      // キューブの回転（装飾用）
+      cube.rotation.x += 0.01;
+      cube.rotation.y += 0.01;
 
+      // シーンをレンダリング
       renderer.render(scene, camera);
     }
 
     animate();
 
-    // ウィンドウリサイズ対応
+    // 8. ウィンドウリサイズ対応
     window.addEventListener('resize', () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight;
