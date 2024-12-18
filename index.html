@@ -57,52 +57,57 @@
     window.addEventListener('keyup', (event) => {
       keys[event.key] = false;
     });
-    
-    // 7. カメラ回転の速度（小さくして滑らかに）
-    const rotationSpeed = 0.05;  // ゆっくり動かすための速
 
-    // 8. アニメーションループ内でのカメラ回転（矢印キー）
+    // 7. カメラ回転の速度
+    const rotationSpeed = -0.09;
+
+    // 8. カメラ移動の速度
+    const moveSpeed = 0.09;
+
+    // 9. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
       
-    // カメラ移動（WASDキー）: カメラの進行方向に移動
+      // カメラ移動（WASDキー）
       const direction = new THREE.Vector3();
       camera.getWorldDirection(direction); // 現在のカメラの進行方向を取得
-      // 現在向いている方向に従って移動
+      
+      // 移動処理（WASDキー）
       if (keys.w) camera.position.addScaledVector(direction, moveSpeed);  // 前方移動
       if (keys.s) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
-
+      
       // 左右方向の計算（進行方向とカメラの上方向の外積）
       const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
       const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
-   
+
       if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
       if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
 
-      // 上下回転（首を挙げる/下げる）
+      // カメラ回転（矢印キー）
       if (keys.ArrowUp) {
         // 上回転（首を挙げる）
-        if (camera.rotation.x > -Math.PI / 4) { // -45度（下を向く）に近づく手前
-          camera.rotation.x -= rotationSpeed; // ゆっくり上に向かう
+        if (camera.rotation.x > -Math.PI / 2) {
+          camera.rotation.x -= rotationSpeed;
         }
       }
       if (keys.ArrowDown) {
         // 下回転（首を下げる）
-        if (camera.rotation.x < Math.PI / 4) { // 45度（上を向く）に近づく手前
-          camera.rotation.x += rotationSpeed; // ゆっくり下に向かう
+        if (camera.rotation.x < Math.PI / 2) {
+          camera.rotation.x += rotationSpeed;
         }
       }
+
       // 左右回転（y軸回転）
       if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左回転
       if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右回転
+      
       // Z軸回転を無効化
       camera.rotation.z = 0;
-      
+
       // シーンをレンダリング
       renderer.render(scene, camera);
     }
 
-    
     animate();
 
     // 地平線を生成する関数
