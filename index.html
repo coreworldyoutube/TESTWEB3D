@@ -47,44 +47,62 @@
     const horizonDepth = 20;
     generateHorizon(scene, horizonWidth, horizonDepth, blockSize, textures);
 
-    // 6. カメラの目標位置と回転
-    let targetPosition = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
-    let targetRotation = new THREE.Vector3(camera.rotation.x, camera.rotation.y, camera.rotation.z);
+    // 6. キー入力管理
+    const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
-    // 7. マウスクリックイベント
-    window.addEventListener('click', (event) => {
-      const mouse = new THREE.Vector2();
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-      const raycaster = new THREE.Raycaster();
-      raycaster.setFromCamera(mouse, camera);
-
-      const intersects = raycaster.intersectObjects(scene.children);
-      if (intersects.length > 0) {
-        const intersection = intersects[0].point;
-        targetPosition.set(intersection.x, intersection.y + 5, intersection.z + 10);
-        targetRotation.set(0, Math.atan2(intersection.z - camera.position.z, intersection.x - camera.position.x), 0);
-      }
+    window.addEventListener('keydown', (event) => {
+      keys[event.key] = true;
+    });
+    window.addEventListener('keyup', (event) => {
+      keys[event.key] = false;
     });
 
-    // 8. アニメーションループ
+    // 7. カメラ回転の速度
+    const rotationSpeed = 0.03;
+
+    // 8. カメラ移動の速度
+    const moveSpeed = 0.09;
+
+    // 9. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
-      // カメラをスムーズに移動
-      camera.position.lerp(targetPosition, 0.1); // 目標位置にスムーズに移動
+      // カメラ移動（WASDキー）
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction); // 現在のカメラの進行方向を取得
 
-      // カメラの向きをスムーズに変更
-      camera.rotation.x += (targetRotation.x - camera.rotation.x) * 0.1;
-      camera.rotation.y += (targetRotation.y - camera.rotation.y) * 0.1;
+      // 移動処理（WASDキー）
+      if (keys.w) camera.position.addScaledVector(direction, moveSpeed);  // 前方移動
+      if (keys.s) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
 
+      // 左右方向の計算（進行方向とカメラの上方向の外積）
+      const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
+      const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
+
+      if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
+      if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
+
+      // 上下回転（ピッチ）
+      if (keys.ArrowUp) {
+        camera.rotation.x -= rotationSpeed;
+        if (camera.rotation.x < -Math.PI / 2) camera.rotation.x = -Math.PI / 2; // 上限設定
+      }
+      if (keys.ArrowDown) {
+        camera.rotation.x += rotationSpeed;
+        if (camera.rotation.x > Math.PI / 2) camera.rotation.x = Math.PI / 2; // 下限設定
+      }
+
+      // 左右回転（ヨー）
+      if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左回転
+      if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右回転
+
+      // シーンをレンダリング
       renderer.render(scene, camera);
     }
 
     animate();
 
-    // 9. 地平線を生成する関数
+    // 地平線を生成する関数
     function generateHorizon(scene, width, depth, blockSize, textures) {
       for (let x = 0; x < width; x++) {
         for (let z = 0; z < depth; z++) {
@@ -106,4 +124,4 @@
     });
   </script>
 </body>
-</html>
+</html> 
