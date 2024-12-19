@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Improved Camera Control</title>
+  <title>included</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -19,10 +19,8 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // 2. 初期カメラの位置設定
-    let radius = 10; // カメラの球面上の距離
-    let phi = 0; // 水平回転
-    let theta = Math.PI / 4; // 垂直回転
+    // 2. カメラの初期位置設定
+    camera.position.set(0, 5, 10); // 初期位置は少し後ろ
 
     // 3. テクスチャをロード（6つの面のテクスチャを指定）
     const loader = new THREE.TextureLoader();
@@ -63,37 +61,40 @@
     const rotationSpeed = 0.03;
 
     // 8. カメラ移動の速度
-    const moveSpeed = 0.1;
+    const moveSpeed = 0.09;
 
     // 9. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
-      // カメラの回転処理
+      // カメラ移動（WASDキー）
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction); // 現在のカメラの進行方向を取得
+
+      // 移動処理（WASDキー）
+      if (keys.w) camera.position.addScaledVector(direction, moveSpeed);  // 前方移動
+      if (keys.s) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
+
+      // 左右方向の計算（進行方向とカメラの上方向の外積）
+      const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
+      const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
+
+      if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
+      if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
+
+      // 上下回転（ピッチ）
       if (keys.ArrowUp) {
-        theta -= rotationSpeed; // 上方向に回転
-        if (theta < 0.1) theta = 0.1; // 限界値設定
+        camera.rotation.x -= rotationSpeed;
+        if (camera.rotation.x < -Math.PI / 2) camera.rotation.x = -Math.PI / 2; // 上限設定
       }
       if (keys.ArrowDown) {
-        theta += rotationSpeed; // 下方向に回転
-        if (theta > Math.PI - 0.1) theta = Math.PI - 0.1; // 限界値設定
+        camera.rotation.x += rotationSpeed;
+        if (camera.rotation.x > Math.PI / 2) camera.rotation.x = Math.PI / 2; // 下限設定
       }
 
-      if (keys.ArrowLeft) {
-        phi -= rotationSpeed; // 左方向に回転
-      }
-      if (keys.ArrowRight) {
-        phi += rotationSpeed; // 右方向に回転
-      }
-
-      // カメラの位置更新（球面座標をデカルト座標に変換）
-      const x = radius * Math.sin(theta) * Math.cos(phi);
-      const y = radius * Math.cos(theta);
-      const z = radius * Math.sin(theta) * Math.sin(phi);
-      camera.position.set(x, y, z);
-
-      // カメラの向きをシーンの中心に設定
-      camera.lookAt(0, 0, 0);
+      // 左右回転（ヨー）
+      if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左回転
+      if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右回転
 
       // シーンをレンダリング
       renderer.render(scene, camera);
