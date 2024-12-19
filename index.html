@@ -82,19 +82,28 @@
       if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
       if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
 
+      // カメラの回転（四元数を使う）
+      const quaternion = new THREE.Quaternion();
+
       // 上下回転（ピッチ）
       if (keys.ArrowUp) {
-        camera.rotation.x -= rotationSpeed;
-        if (camera.rotation.x < -Math.PI / 2) camera.rotation.x = -Math.PI / 2; // 上限設定
+        quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), rotationSpeed); // X軸を中心に回転
+        camera.quaternion.multiply(quaternion); // 四元数を適用
       }
       if (keys.ArrowDown) {
-        camera.rotation.x += rotationSpeed;
-        if (camera.rotation.x > Math.PI / 2) camera.rotation.x = Math.PI / 2; // 下限設定
+        quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -rotationSpeed); // X軸を中心に回転
+        camera.quaternion.multiply(quaternion); // 四元数を適用
       }
 
       // 左右回転（ヨー）
-      if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左回転
-      if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右回転
+      if (keys.ArrowLeft) {
+        quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotationSpeed); // Y軸を中心に回転
+        camera.quaternion.multiply(quaternion); // 四元数を適用
+      }
+      if (keys.ArrowRight) {
+        quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -rotationSpeed); // Y軸を中心に回転
+        camera.quaternion.multiply(quaternion); // 四元数を適用
+      }
 
       // シーンをレンダリング
       renderer.render(scene, camera);
@@ -124,4 +133,4 @@
     });
   </script>
 </body>
-</html> 
+</html>
