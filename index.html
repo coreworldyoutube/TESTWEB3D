@@ -63,10 +63,6 @@
     // 8. カメラ移動の速度
     const moveSpeed = 0.09;
 
-    // 回転の制限
-    const maxRotationX = Math.PI / 2;  // 上下回転の最大値（90度）
-    const minRotationX = -Math.PI / 2; // 上下回転の最小値（-90度）
-
     // 9. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
@@ -87,16 +83,14 @@
       if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
 
       // カメラの回転（オイラー角を使う）
-      const euler = new THREE.Euler(0, 0, 0, 'YXZ'); // 'YXZ' の回転順序を使用
+      const euler = camera.rotation.clone(); // 現在のカメラの回転状態を取得
 
       // 上下回転（ピッチ）
       if (keys.ArrowUp) {
         euler.x -= rotationSpeed; // X軸を中心に回転
-        if (euler.x < minRotationX) euler.x = minRotationX; // 上限設定
       }
       if (keys.ArrowDown) {
         euler.x += rotationSpeed; // X軸を中心に回転
-        if (euler.x > maxRotationX) euler.x = maxRotationX; // 下限設定
       }
 
       // 左右回転（ヨー）
@@ -106,6 +100,10 @@
       if (keys.ArrowRight) {
         euler.y += rotationSpeed; // Y軸を中心に回転
       }
+
+      // X軸回転の制限を少しだけかける（過度な回転を防ぐ）
+      if (euler.x > Math.PI / 2) euler.x = Math.PI / 2;  // 最大90度
+      if (euler.x < -Math.PI / 2) euler.x = -Math.PI / 2; // 最小-90度
 
       // オイラー角をカメラに適用
       camera.rotation.set(euler.x, euler.y, euler.z);
