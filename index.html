@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Three.js with Controller Camera Control</title>
+  <title>Three.js Camera Movement with Controller</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -85,6 +85,13 @@
 
         // カメラ回転
         updateCameraRotation(joystickX, joystickY);
+
+        // 左スティックによる移動
+        const moveX = axes[0]; // 左スティックX（左右）
+        const moveY = axes[1]; // 左スティックY（上下）
+
+        // カメラ移動
+        updateCameraMovement(moveX, moveY);
       }
 
       // キー入力による移動
@@ -132,6 +139,19 @@
       // ピッチ（上下回転）の制限
       if (camera.rotation.x > Math.PI / 2) camera.rotation.x = Math.PI / 2;
       if (camera.rotation.x < -Math.PI / 2) camera.rotation.x = -Math.PI / 2;
+    }
+
+    // カメラ移動の関数（ゲームパッドの左アナログスティック入力を使用）
+    function updateCameraMovement(moveX, moveY) {
+      const forward = new THREE.Vector3();
+      camera.getWorldDirection(forward);
+
+      // 左スティックによる移動（前後）
+      camera.position.addScaledVector(forward, moveY * moveSpeed);
+
+      // 左右方向の計算（進行方向とカメラの上方向の外積）
+      const left = new THREE.Vector3().crossVectors(camera.up, forward).normalize();
+      camera.position.addScaledVector(left, moveX * moveSpeed); // 左右移動
     }
 
     // ウィンドウサイズが変更された場合に対応
