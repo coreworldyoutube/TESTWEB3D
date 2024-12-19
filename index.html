@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sphere Coordinate Camera Control</title>
+  <title>Improved Camera Control</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -19,59 +19,80 @@
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // 2. カメラの初期位置設定
-    const radius = 10; // 視点からの距離
-    let phi = 0; // 水平角度（経度）
-    let theta = Math.PI / 2; // 垂直角度（緯度）
+    // 2. 初期カメラの位置設定
+    let radius = 10; // カメラの球面上の距離
+    let phi = 0; // 水平回転
+    let theta = Math.PI / 4; // 垂直回転
 
-    // 3. キー入力管理
-    const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+    // 3. テクスチャをロード（6つの面のテクスチャを指定）
+    const loader = new THREE.TextureLoader();
+    const textures = [
+      loader.load('grass.png'),  // 正面
+      loader.load('grass.png'),   // 背面
+      loader.load('grass.png'),    // 上面
+      loader.load('dirt.png'), // 底面
+      loader.load('grass.png'),  // 右面
+      loader.load('grass.png')    // 左面
+    ];
+
+    // 4. ライトの追加
+    const light = new THREE.PointLight(0xffffff, 1, 100);
+    light.position.set(0, 50, 0); // ライトの位置
+    scene.add(light);
+
+    const ambientLight = new THREE.AmbientLight(0x404040, 1);  // 環境光を追加して影をやわらげる
+    scene.add(ambientLight);
+
+    // 5. 地平線を生成する（1ブロックずつ配置）
+    const blockSize = 2;
+    const horizonWidth = 20;
+    const horizonDepth = 20;
+    generateHorizon(scene, horizonWidth, horizonDepth, blockSize, textures);
+
+    // 6. キー入力管理
+    const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
     window.addEventListener('keydown', (event) => {
-      if (event.key in keys) {
-        keys[event.key] = true;
-      }
+      keys[event.key] = true;
     });
-
     window.addEventListener('keyup', (event) => {
-      if (event.key in keys) {
-        keys[event.key] = false;
-      }
+      keys[event.key] = false;
     });
 
-    // 4. アニメーションループ
+    // 7. カメラ回転の速度
+    const rotationSpeed = 0.03;
+
+    // 8. カメラ移動の速度
+    const moveSpeed = 0.1;
+
+    // 9. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
-      // カメラの動き
-      const moveSpeed = 0.05;
-      const rotationSpeed = 0.05;
-
-      // 上下（緯度）移動
+      // カメラの回転処理
       if (keys.ArrowUp) {
-        theta = Math.max(0.1, theta - moveSpeed);  // 上に動かす（限界を設定）
-      } 
+        theta -= rotationSpeed; // 上方向に回転
+        if (theta < 0.1) theta = 0.1; // 限界値設定
+      }
       if (keys.ArrowDown) {
-        theta = Math.min(Math.PI - 0.1, theta + moveSpeed);  // 下に動かす（限界を設定）
+        theta += rotationSpeed; // 下方向に回転
+        if (theta > Math.PI - 0.1) theta = Math.PI - 0.1; // 限界値設定
       }
 
-      // 左右（経度）移動
       if (keys.ArrowLeft) {
-        phi -= rotationSpeed;  // 左に動かす
-      } 
+        phi -= rotationSpeed; // 左方向に回転
+      }
       if (keys.ArrowRight) {
-        phi += rotationSpeed;  // 右に動かす
+        phi += rotationSpeed; // 右方向に回転
       }
 
-      // 球面座標をデカルト座標に変換
+      // カメラの位置更新（球面座標をデカルト座標に変換）
       const x = radius * Math.sin(theta) * Math.cos(phi);
       const y = radius * Math.cos(theta);
       const z = radius * Math.sin(theta) * Math.sin(phi);
-      
-      // カメラの位置を更新
       camera.position.set(x, y, z);
 
-      // カメラが常にシーンの中心を向くように設定
+      // カメラの向きをシーンの中心に設定
       camera.lookAt(0, 0, 0);
 
       // シーンをレンダリング
@@ -80,21 +101,21 @@
 
     animate();
 
-    // 5. シーンに何かオブジェクトを追加（デモ用）
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
+    // 地平線を生成する関数
+    function generateHorizon(scene, width, depth, blockSize, textures) {
+      for (let x = 0; x < width; x++) {
+        for (let z = 0; z < depth; z++) {
+          const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
+          const materials = textures.map(texture => new THREE.MeshBasicMaterial({ map: texture }));
 
-    // 6. ライトの追加
-    const light = new THREE.PointLight(0xffffff, 1, 100);
-    light.position.set(0, 50, 0);
-    scene.add(light);
+          const block = new THREE.Mesh(geometry, materials);
+          block.position.set(x * blockSize, 0, z * blockSize); // 地平線のブロック配置
+          scene.add(block);
+        }
+      }
+    }
 
-    const ambientLight = new THREE.AmbientLight(0x404040, 1);
-    scene.add(ambientLight);
-
-    // 7. ウィンドウサイズ変更時の対応
+    // 10. ウィンドウサイズが変更された場合に対応
     window.addEventListener('resize', () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight;
