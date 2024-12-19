@@ -63,7 +63,10 @@
     // 8. カメラ移動の速度
     const moveSpeed = 0.09;
 
-    // 9. アニメーションループ
+    // 9. カメラの回転にクォータニオンを使用
+    const quaternion = new THREE.Quaternion(); // クォータニオンを作成
+
+    // 10. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
@@ -82,31 +85,24 @@
       if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
       if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
 
-      // カメラの回転（オイラー角を使う）
-      const euler = camera.rotation.clone(); // 現在のカメラの回転状態を取得
-
-      // 上下回転（ピッチ）
+      // 回転処理
       if (keys.ArrowUp) {
-        euler.x -= rotationSpeed; // X軸を中心に回転
+        quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -rotationSpeed); // X軸回転
+        camera.quaternion.multiply(quaternion); // クォータニオンを適用
       }
       if (keys.ArrowDown) {
-        euler.x += rotationSpeed; // X軸を中心に回転
+        quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), rotationSpeed); // X軸回転
+        camera.quaternion.multiply(quaternion); // クォータニオンを適用
       }
 
-      // 左右回転（ヨー）
       if (keys.ArrowLeft) {
-        euler.y -= rotationSpeed; // Y軸を中心に回転
+        quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotationSpeed); // Y軸回転
+        camera.quaternion.multiply(quaternion); // クォータニオンを適用
       }
       if (keys.ArrowRight) {
-        euler.y += rotationSpeed; // Y軸を中心に回転
+        quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -rotationSpeed); // Y軸回転
+        camera.quaternion.multiply(quaternion); // クォータニオンを適用
       }
-
-      // X軸回転の制限を少しだけかける（過度な回転を防ぐ）
-      if (euler.x > Math.PI / 2) euler.x = Math.PI / 2;  // 最大90度
-      if (euler.x < -Math.PI / 2) euler.x = -Math.PI / 2; // 最小-90度
-
-      // オイラー角をカメラに適用
-      camera.rotation.set(euler.x, euler.y, euler.z);
 
       // シーンをレンダリング
       renderer.render(scene, camera);
@@ -128,7 +124,7 @@
       }
     }
 
-    // 10. ウィンドウサイズが変更された場合に対応
+    // 11. ウィンドウサイズが変更された場合に対応
     window.addEventListener('resize', () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight;
