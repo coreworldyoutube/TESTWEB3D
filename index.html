@@ -11,6 +11,7 @@
 </head>
 <body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/controls/OrbitControls.js"></script>
   <script>
     // 1. シーン、カメラ、レンダラーのセットアップ
     const scene = new THREE.Scene();
@@ -47,54 +48,38 @@
     const horizonDepth = 20;
     generateHorizon(scene, horizonWidth, horizonDepth, blockSize, textures);
 
-    // 6. キー入力管理
-    const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+    // 6. OrbitControls の追加
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; // 慣性を持たせる
+    controls.dampingFactor = 0.25; // 慣性の強さ
+    controls.screenSpacePanning = false; // パン操作を無効化
 
-    window.addEventListener('keydown', (event) => {
-      keys[event.key] = true;
+    // 7. タップによるカメラの移動
+    window.addEventListener('click', (event) => {
+      // マウスの位置を取得
+      const mouse = new THREE.Vector2();
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      // レイキャストを利用してカメラの向きを変更
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+
+      const intersects = raycaster.intersectObjects(scene.children);
+      if (intersects.length > 0) {
+        // 最初の交差オブジェクトの位置を取得して、カメラを移動
+        const intersection = intersects[0].point;
+        camera.position.set(intersection.x, intersection.y + 5, intersection.z + 10); // クリック位置にカメラを移動
+        camera.lookAt(intersection); // クリック位置を見る
+      }
     });
-    window.addEventListener('keyup', (event) => {
-      keys[event.key] = false;
-    });
 
-    // 7. カメラ回転の速度
-    const rotationSpeed = 0.03;
-
-    // 8. カメラ移動の速度
-    const moveSpeed = 0.09;
-
-    // 9. アニメーションループ
+    // 8. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
-      // カメラ移動（WASDキー）
-      const direction = new THREE.Vector3();
-      camera.getWorldDirection(direction); // 現在のカメラの進行方向を取得
-
-      // 移動処理（WASDキー）
-      if (keys.w) camera.position.addScaledVector(direction, moveSpeed);  // 前方移動
-      if (keys.s) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
-
-      // 左右方向の計算（進行方向とカメラの上方向の外積）
-      const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
-      const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
-
-      if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
-      if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
-
-      // 上下回転（ピッチ）
-      if (keys.ArrowUp) {
-        camera.rotation.x -= rotationSpeed;
-        if (camera.rotation.x < -Math.PI / 2) camera.rotation.x = -Math.PI / 2; // 上限設定
-      }
-      if (keys.ArrowDown) {
-        camera.rotation.x += rotationSpeed;
-        if (camera.rotation.x > Math.PI / 2) camera.rotation.x = Math.PI / 2; // 下限設定
-      }
-
-      // 左右回転（ヨー）
-      if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左回転
-      if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右回転
+      // コントロールの更新
+      controls.update(); // 必須
 
       // シーンをレンダリング
       renderer.render(scene, camera);
@@ -116,7 +101,7 @@
       }
     }
 
-    // 10. ウィンドウサイズが変更された場合に対応
+    // 9. ウィンドウサイズが変更された場合に対応
     window.addEventListener('resize', () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight;
