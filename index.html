@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>included</title>
+  <title>Three.js with Controller Camera Control</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -22,18 +22,7 @@
     // 2. カメラの初期位置設定
     camera.position.set(0, 5, 10); // 初期位置は少し後ろ
 
-    // 3. テクスチャをロード（6つの面のテクスチャを指定）
-    const loader = new THREE.TextureLoader();
-    const textures = [
-      loader.load('grass.png'),  // 正面
-      loader.load('grass.png'),   // 背面
-      loader.load('grass.png'),    // 上面
-      loader.load('dirt.png'), // 底面
-      loader.load('grass.png'),  // 右面
-      loader.load('grass.png')    // 左面
-    ];
-
-    // 4. ライトの追加
+    // 3. ライトの追加
     const light = new THREE.PointLight(0xffffff, 1, 100);
     light.position.set(0, 50, 0); // ライトの位置
     scene.add(light);
@@ -41,40 +30,68 @@
     const ambientLight = new THREE.AmbientLight(0x404040, 1);  // 環境光を追加して影をやわらげる
     scene.add(ambientLight);
 
-    // 5. 地平線を生成する（1ブロックずつ配置）
+    // 4. テクスチャのロード
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load('grass.png'); // grass.pngがテクスチャ画像の例
+
+    // 5. 地平線を生成する（ブロック配置）
     const blockSize = 2;
     const horizonWidth = 20;
     const horizonDepth = 20;
-    generateHorizon(scene, horizonWidth, horizonDepth, blockSize, textures);
+    generateHorizon(scene, horizonWidth, horizonDepth, blockSize, texture);
 
-    // 6. キー入力管理
-    const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
-
-    window.addEventListener('keydown', (event) => {
-      keys[event.key] = true;
+    // 6. ゲームパッド（コントローラー）の初期設定
+    let gamepad = null;
+    window.addEventListener('gamepadconnected', (event) => {
+      gamepad = event.gamepad;
     });
-    window.addEventListener('keyup', (event) => {
-      keys[event.key] = false;
+    window.addEventListener('gamepaddisconnected', (event) => {
+      gamepad = null;
     });
 
     // 7. カメラ回転の速度
     const rotationSpeed = 0.03;
 
     // 8. カメラ移動の速度
-    const moveSpeed = 0.09;
+    const moveSpeed = 0.1;
 
-    // 9. アニメーションループ
+    // 9. プレイヤー移動の状態
+    const keys = { w: false, a: false, s: false, d: false };
+
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'w') keys.w = true;
+      if (event.key === 'a') keys.a = true;
+      if (event.key === 's') keys.s = true;
+      if (event.key === 'd') keys.d = true;
+    });
+
+    window.addEventListener('keyup', (event) => {
+      if (event.key === 'w') keys.w = false;
+      if (event.key === 'a') keys.a = false;
+      if (event.key === 's') keys.s = false;
+      if (event.key === 'd') keys.d = false;
+    });
+
+    // 10. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
-      // カメラ移動（WASDキー）
+      if (gamepad) {
+        const axes = gamepad.axes;
+
+        // 右アナログスティックによるカメラ回転
+        const joystickX = axes[2]; // 右スティックX（左右）
+        const joystickY = axes[3]; // 右スティックY（上下）
+
+        // カメラ回転
+        updateCameraRotation(joystickX, joystickY);
+      }
+
+      // キー入力による移動
       const direction = new THREE.Vector3();
-
-      // カメラの進行方向ベクトル
       camera.getWorldDirection(direction); // カメラの進行方向を取得
-      direction.y = 0; // Y軸方向の移動を無効にして水平移動のみ
 
-      // 移動処理（WASDキー）
+      // WASDキーによる移動
       if (keys.w) camera.position.addScaledVector(direction, moveSpeed);  // 前方移動
       if (keys.s) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
 
@@ -85,41 +102,39 @@
       if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
       if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
 
-      // 上下回転（ピッチ）
-      if (keys.ArrowUp) {
-        camera.rotation.x -= rotationSpeed;
-        if (camera.rotation.x < -Math.PI / 2) camera.rotation.x = -Math.PI / 2; // 上限設定
-      }
-      if (keys.ArrowDown) {
-        camera.rotation.x += rotationSpeed;
-        if (camera.rotation.x > Math.PI / 2) camera.rotation.x = Math.PI / 2; // 下限設定
-      }
-
-      // 左右回転（ヨー）
-      if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左回転
-      if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右回転
-
       // シーンをレンダリング
       renderer.render(scene, camera);
     }
 
     animate();
 
-    // 地平線を生成する関数
-    function generateHorizon(scene, width, depth, blockSize, textures) {
+    // 地平線を生成する関数（簡単な地面）
+    function generateHorizon(scene, width, depth, blockSize, texture) {
       for (let x = 0; x < width; x++) {
         for (let z = 0; z < depth; z++) {
           const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
-          const materials = textures.map(texture => new THREE.MeshBasicMaterial({ map: texture }));
-
-          const block = new THREE.Mesh(geometry, materials);
-          block.position.set(x * blockSize, 0, z * blockSize); // 地平線のブロック配置
+          const material = new THREE.MeshBasicMaterial({ map: texture }); // テクスチャを適用
+          const block = new THREE.Mesh(geometry, material);
+          block.position.set(x * blockSize, 0, z * blockSize);  // ブロックの配置
           scene.add(block);
         }
       }
     }
 
-    // 10. ウィンドウサイズが変更された場合に対応
+    // カメラ回転の関数（ゲームパッドの右アナログスティック入力を使用）
+    function updateCameraRotation(joystickX, joystickY) {
+      // X軸（左右）の動きでカメラ回転（ヨー）
+      camera.rotation.y -= joystickX * rotationSpeed;
+
+      // Y軸（上下）の動きでカメラ回転（ピッチ）
+      camera.rotation.x -= joystickY * rotationSpeed;
+
+      // ピッチ（上下回転）の制限
+      if (camera.rotation.x > Math.PI / 2) camera.rotation.x = Math.PI / 2;
+      if (camera.rotation.x < -Math.PI / 2) camera.rotation.x = -Math.PI / 2;
+    }
+
+    // ウィンドウサイズが変更された場合に対応
     window.addEventListener('resize', () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
       camera.aspect = window.innerWidth / window.innerHeight;
