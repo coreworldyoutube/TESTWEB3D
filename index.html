@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Three.js Camera Movement with Arrow Keys</title>
+  <title>Camera and Terrain</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -12,66 +12,80 @@
 <body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
-    // 1. シーン、カメラ、レンダラーのセットアップ
+    // シーン、カメラ、レンダラーのセットアップ
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // 2. カメラの初期位置設定
-    camera.position.set(0, 5, 10); // 初期位置は少し後ろ
+    // カメラの初期位置設定
+    camera.position.set(0, 5, 10);
 
-    // 3. ライトの追加
+    // ライトの追加
     const light = new THREE.PointLight(0xffffff, 1, 100);
-    light.position.set(0, 50, 0); // ライトの位置
+    light.position.set(0, 50, 0);
     scene.add(light);
 
-    const ambientLight = new THREE.AmbientLight(0x404040, 1);  // 環境光を追加して影をやわらげる
+    const ambientLight = new THREE.AmbientLight(0x404040, 1);
     scene.add(ambientLight);
 
-    // 4. テクスチャのロード
+    // テクスチャの読み込み（6つの面のテクスチャを指定）
     const loader = new THREE.TextureLoader();
-    const texture = loader.load('grass.png'); // grass.pngがテクスチャ画像の例
+    const textures = [
+      loader.load('grass.png'),  // 正面
+      loader.load('grass.png'),  // 背面
+      loader.load('grass.png'),  // 上面
+      loader.load('dirt.png'),   // 底面
+      loader.load('grass.png'),  // 右面
+      loader.load('grass.png')   // 左面
+    ];
 
-    // 5. 地平線を生成する（ブロック配置）
+    // 地形生成
     const blockSize = 2;
     const horizonWidth = 20;
     const horizonDepth = 20;
-    generateHorizon(scene, horizonWidth, horizonDepth, blockSize, texture);
+    generateHorizon(scene, horizonWidth, horizonDepth, blockSize, textures);
 
-    // 6. カメラ回転の速度
-    const rotationSpeed = 0.03;
-
-    // 7. カメラ移動の速度
+    // カメラの移動速度
     const moveSpeed = 0.1;
+    const rotationSpeed = 0.02;
 
-    // 8. プレイヤー移動の状態
-    const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+    // キー入力管理
+    const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
     window.addEventListener('keydown', (event) => {
-      if (event.key === 'ArrowUp') keys.ArrowUp = true;
-      if (event.key === 'ArrowDown') keys.ArrowDown = true;
-      if (event.key === 'ArrowLeft') keys.ArrowLeft = true;
-      if (event.key === 'ArrowRight') keys.ArrowRight = true;
+      if (keys.hasOwnProperty(event.key)) keys[event.key] = true;
     });
 
     window.addEventListener('keyup', (event) => {
-      if (event.key === 'ArrowUp') keys.ArrowUp = false;
-      if (event.key === 'ArrowDown') keys.ArrowDown = false;
-      if (event.key === 'ArrowLeft') keys.ArrowLeft = false;
-      if (event.key === 'ArrowRight') keys.ArrowRight = false;
+      if (keys.hasOwnProperty(event.key)) keys[event.key] = false;
     });
 
-    // 9. アニメーションループ
+    // アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
-      // カメラ回転処理（ここでは十字キーを使用して左右回転する部分）
-      updateCameraRotation();
+      // カメラ移動（WASDキー）
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction); // 現在のカメラの進行方向を取得
 
-      // カメラ移動処理
-      updateCameraMovement();
+      // 移動処理（WASDキー）
+      if (keys.w) camera.position.addScaledVector(direction, moveSpeed);  // 前方移動
+      if (keys.s) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
+
+      // 左右方向の計算（進行方向とカメラの上方向の外積）
+      const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
+      const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
+
+      if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
+      if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
+
+      // カメラ回転（矢印キー）
+      if (keys.ArrowUp) camera.rotation.x -= rotationSpeed; // 上方向回転
+      if (keys.ArrowDown) camera.rotation.x += rotationSpeed; // 下方向回転
+      if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左方向回転
+      if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右方向回転
 
       // シーンをレンダリング
       renderer.render(scene, camera);
@@ -79,44 +93,18 @@
 
     animate();
 
-    // 地平線を生成する関数（簡単な地面）
-    function generateHorizon(scene, width, depth, blockSize, texture) {
+    // 地平線を生成する関数
+    function generateHorizon(scene, width, depth, blockSize, textures) {
       for (let x = 0; x < width; x++) {
         for (let z = 0; z < depth; z++) {
           const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
-          const material = new THREE.MeshBasicMaterial({ map: texture }); // テクスチャを適用
-          const block = new THREE.Mesh(geometry, material);
-          block.position.set(x * blockSize, 0, z * blockSize);  // ブロックの配置
+          const materials = textures.map(texture => new THREE.MeshBasicMaterial({ map: texture }));
+
+          const block = new THREE.Mesh(geometry, materials);
+          block.position.set(x * blockSize, 0, z * blockSize); // 地平線のブロック配置
           scene.add(block);
         }
       }
-    }
-
-    // カメラ回転の関数（十字キーで左右回転）
-    function updateCameraRotation() {
-      // 左右の回転（左右の矢印キー）
-      if (keys.ArrowLeft) camera.rotation.y += rotationSpeed;
-      if (keys.ArrowRight) camera.rotation.y -= rotationSpeed;
-
-      // ピッチ（上下回転）は今回は無効にしています
-    }
-
-    // カメラ移動の関数（十字キーで前後左右移動）
-    function updateCameraMovement() {
-      const direction = new THREE.Vector3();
-      camera.getWorldDirection(direction); // カメラの進行方向を取得
-
-      // 前後移動（ArrowUp, ArrowDown）
-      if (keys.ArrowUp) camera.position.addScaledVector(direction, moveSpeed);  // 前方移動
-      if (keys.ArrowDown) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
-
-      // 左右方向の計算（進行方向とカメラの上方向の外積）
-      const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
-      const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
-
-      // 左右移動（ArrowLeft, ArrowRight）
-      if (keys.ArrowLeft) camera.position.addScaledVector(left, moveSpeed);  // 左移動
-      if (keys.ArrowRight) camera.position.addScaledVector(right, moveSpeed); // 右移動
     }
 
     // ウィンドウサイズが変更された場合に対応
