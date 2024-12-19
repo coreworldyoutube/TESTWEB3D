@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>マインクラフト風地平線</title>
+  <title>included</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -25,12 +25,12 @@
     // 3. テクスチャをロード（6つの面のテクスチャを指定）
     const loader = new THREE.TextureLoader();
     const textures = [
-      loader.load('meow.png'),  // 正面
-      loader.load('meow.png'),   // 背面
-      loader.load('meow.png'),    // 上面
+      loader.load('grass.png'),  // 正面
+      loader.load('grass.png'),   // 背面
+      loader.load('grass.png'),    // 上面
       loader.load('meow.png'), // 底面
-      loader.load('meow.png'),  // 右面
-      loader.load('meow.png')    // 左面
+      loader.load('grass.png'),  // 右面
+      loader.load('grass.png')    // 左面
     ];
 
     // 4. ライトの追加
