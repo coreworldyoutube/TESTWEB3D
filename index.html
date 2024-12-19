@@ -63,6 +63,10 @@
     // 8. カメラ移動の速度
     const moveSpeed = 0.09;
 
+    // 回転の制限
+    const maxRotationX = Math.PI / 2;  // 上下回転の最大値（90度）
+    const minRotationX = -Math.PI / 2; // 上下回転の最小値（-90度）
+
     // 9. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
@@ -88,9 +92,11 @@
       // 上下回転（ピッチ）
       if (keys.ArrowUp) {
         euler.x -= rotationSpeed; // X軸を中心に回転
+        if (euler.x < minRotationX) euler.x = minRotationX; // 上限設定
       }
       if (keys.ArrowDown) {
         euler.x += rotationSpeed; // X軸を中心に回転
+        if (euler.x > maxRotationX) euler.x = maxRotationX; // 下限設定
       }
 
       // 左右回転（ヨー）
