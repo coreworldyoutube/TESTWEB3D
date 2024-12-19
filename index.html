@@ -20,7 +20,7 @@
     document.body.appendChild(renderer.domElement);
 
     // カメラの初期位置設定
-    camera.position.set(0, 0, 0);
+    camera.position.set(0, 10, 50);
 
     // ライトの追加
     const light = new THREE.PointLight(0xffffff, 1, 100);
@@ -45,7 +45,8 @@
     const blockSize = 2;
     const horizonWidth = 50;
     const horizonDepth = 50;
-    generateHorizon(scene, horizonWidth, horizonDepth, blockSize, textures);
+    const maxHeight = 25;  // 高さの最大値
+    generateHorizon(scene, horizonWidth, horizonDepth, blockSize, textures, maxHeight);
 
     // カメラの移動速度
     const moveSpeed = -0.1;
@@ -94,14 +95,18 @@
     animate();
 
     // 地平線を生成する関数
-    function generateHorizon(scene, width, depth, blockSize, textures) {
+    function generateHorizon(scene, width, depth, blockSize, textures, maxHeight) {
       for (let x = 0; x < width; x++) {
         for (let z = 0; z < depth; z++) {
           const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
           const materials = textures.map(texture => new THREE.MeshBasicMaterial({ map: texture }));
 
           const block = new THREE.Mesh(geometry, materials);
-          block.position.set(x * blockSize, 0, z * blockSize); // 地平線のブロック配置
+
+          // ランダムな高さを設定
+          const height = Math.floor(Math.random() * maxHeight) + 1;  // 1からmaxHeightの範囲でランダムな高さを設定
+          block.position.set(x * blockSize, height, z * blockSize);  // 高さを追加
+
           scene.add(block);
         }
       }
