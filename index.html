@@ -20,7 +20,7 @@
     document.body.appendChild(renderer.domElement);
 
     // カメラの初期位置設定
-    camera.position.set(0, 25, 25);
+    camera.position.set(0, 0, 0);
 
     // ライトの追加
     const light = new THREE.PointLight(0xffffff, 1, 100);
@@ -48,7 +48,7 @@
     generateHorizon(scene, horizonWidth, horizonDepth, blockSize, textures);
 
     // カメラの移動速度
-    const moveSpeed = 0.1;
+    const moveSpeed = -0.1;
     const rotationSpeed = 0.02;
 
     // キー入力管理
