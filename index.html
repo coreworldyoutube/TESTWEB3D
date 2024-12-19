@@ -58,7 +58,7 @@
     });
 
     // 7. カメラ回転の速度
-    const rotationSpeed = -0.03;
+    const rotationSpeed = 0.03;
 
     // 8. カメラ移動の速度
     const moveSpeed = 0.09;
@@ -82,28 +82,27 @@
       if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
       if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
 
-      // カメラの回転（四元数を使う）
-      const quaternion = new THREE.Quaternion();
+      // カメラの回転（オイラー角を使う）
+      const euler = new THREE.Euler(0, 0, 0, 'YXZ'); // 'YXZ' の回転順序を使用
 
       // 上下回転（ピッチ）
       if (keys.ArrowUp) {
-        quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), rotationSpeed); // X軸を中心に回転
-        camera.quaternion.multiply(quaternion); // 四元数を適用
+        euler.x -= rotationSpeed; // X軸を中心に回転
       }
       if (keys.ArrowDown) {
-        quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -rotationSpeed); // X軸を中心に回転
-        camera.quaternion.multiply(quaternion); // 四元数を適用
+        euler.x += rotationSpeed; // X軸を中心に回転
       }
 
       // 左右回転（ヨー）
       if (keys.ArrowLeft) {
-        quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotationSpeed); // Y軸を中心に回転
-        camera.quaternion.multiply(quaternion); // 四元数を適用
+        euler.y -= rotationSpeed; // Y軸を中心に回転
       }
       if (keys.ArrowRight) {
-        quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -rotationSpeed); // Y軸を中心に回転
-        camera.quaternion.multiply(quaternion); // 四元数を適用
+        euler.y += rotationSpeed; // Y軸を中心に回転
       }
+
+      // オイラー角をカメラに適用
+      camera.rotation.set(euler.x, euler.y, euler.z);
 
       // シーンをレンダリング
       renderer.render(scene, camera);
