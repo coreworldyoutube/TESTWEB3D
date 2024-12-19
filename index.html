@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Three.js Camera Movement with Controller</title>
+  <title>Three.js Camera Movement with Arrow Keys</title>
   <style>
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
@@ -40,74 +40,38 @@
     const horizonDepth = 20;
     generateHorizon(scene, horizonWidth, horizonDepth, blockSize, texture);
 
-    // 6. ゲームパッド（コントローラー）の初期設定
-    let gamepad = null;
-    window.addEventListener('gamepadconnected', (event) => {
-      gamepad = event.gamepad;
-    });
-    window.addEventListener('gamepaddisconnected', (event) => {
-      gamepad = null;
-    });
-
-    // 7. カメラ回転の速度
+    // 6. カメラ回転の速度
     const rotationSpeed = 0.03;
 
-    // 8. カメラ移動の速度
+    // 7. カメラ移動の速度
     const moveSpeed = 0.1;
 
-    // 9. プレイヤー移動の状態
-    const keys = { w: false, a: false, s: false, d: false };
+    // 8. プレイヤー移動の状態
+    const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
     window.addEventListener('keydown', (event) => {
-      if (event.key === 'w') keys.w = true;
-      if (event.key === 'a') keys.a = true;
-      if (event.key === 's') keys.s = true;
-      if (event.key === 'd') keys.d = true;
+      if (event.key === 'ArrowUp') keys.ArrowUp = true;
+      if (event.key === 'ArrowDown') keys.ArrowDown = true;
+      if (event.key === 'ArrowLeft') keys.ArrowLeft = true;
+      if (event.key === 'ArrowRight') keys.ArrowRight = true;
     });
 
     window.addEventListener('keyup', (event) => {
-      if (event.key === 'w') keys.w = false;
-      if (event.key === 'a') keys.a = false;
-      if (event.key === 's') keys.s = false;
-      if (event.key === 'd') keys.d = false;
+      if (event.key === 'ArrowUp') keys.ArrowUp = false;
+      if (event.key === 'ArrowDown') keys.ArrowDown = false;
+      if (event.key === 'ArrowLeft') keys.ArrowLeft = false;
+      if (event.key === 'ArrowRight') keys.ArrowRight = false;
     });
 
-    // 10. アニメーションループ
+    // 9. アニメーションループ
     function animate() {
       requestAnimationFrame(animate);
 
-      if (gamepad) {
-        const axes = gamepad.axes;
+      // カメラ回転処理（ここでは十字キーを使用して左右回転する部分）
+      updateCameraRotation();
 
-        // 右アナログスティックによるカメラ回転
-        const joystickX = axes[2]; // 右スティックX（左右）
-        const joystickY = axes[3]; // 右スティックY（上下）
-
-        // カメラ回転
-        updateCameraRotation(joystickX, joystickY);
-
-        // 左スティックによる移動
-        const moveX = axes[0]; // 左スティックX（左右）
-        const moveY = axes[1]; // 左スティックY（上下）
-
-        // カメラ移動
-        updateCameraMovement(moveX, moveY);
-      }
-
-      // キー入力による移動
-      const direction = new THREE.Vector3();
-      camera.getWorldDirection(direction); // カメラの進行方向を取得
-
-      // WASDキーによる移動
-      if (keys.w) camera.position.addScaledVector(direction, moveSpeed);  // 前方移動
-      if (keys.s) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
-
-      // 左右方向の計算（進行方向とカメラの上方向の外積）
-      const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
-      const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
-
-      if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
-      if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
+      // カメラ移動処理
+      updateCameraMovement();
 
       // シーンをレンダリング
       renderer.render(scene, camera);
@@ -128,30 +92,31 @@
       }
     }
 
-    // カメラ回転の関数（ゲームパッドの右アナログスティック入力を使用）
-    function updateCameraRotation(joystickX, joystickY) {
-      // X軸（左右）の動きでカメラ回転（ヨー）
-      camera.rotation.y -= joystickX * rotationSpeed;
+    // カメラ回転の関数（十字キーで左右回転）
+    function updateCameraRotation() {
+      // 左右の回転（左右の矢印キー）
+      if (keys.ArrowLeft) camera.rotation.y += rotationSpeed;
+      if (keys.ArrowRight) camera.rotation.y -= rotationSpeed;
 
-      // Y軸（上下）の動きでカメラ回転（ピッチ）
-      camera.rotation.x -= joystickY * rotationSpeed;
-
-      // ピッチ（上下回転）の制限
-      if (camera.rotation.x > Math.PI / 2) camera.rotation.x = Math.PI / 2;
-      if (camera.rotation.x < -Math.PI / 2) camera.rotation.x = -Math.PI / 2;
+      // ピッチ（上下回転）は今回は無効にしています
     }
 
-    // カメラ移動の関数（ゲームパッドの左アナログスティック入力を使用）
-    function updateCameraMovement(moveX, moveY) {
-      const forward = new THREE.Vector3();
-      camera.getWorldDirection(forward);
+    // カメラ移動の関数（十字キーで前後左右移動）
+    function updateCameraMovement() {
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction); // カメラの進行方向を取得
 
-      // 左スティックによる移動（前後）
-      camera.position.addScaledVector(forward, moveY * moveSpeed);
+      // 前後移動（ArrowUp, ArrowDown）
+      if (keys.ArrowUp) camera.position.addScaledVector(direction, moveSpeed);  // 前方移動
+      if (keys.ArrowDown) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
 
       // 左右方向の計算（進行方向とカメラの上方向の外積）
-      const left = new THREE.Vector3().crossVectors(camera.up, forward).normalize();
-      camera.position.addScaledVector(left, moveX * moveSpeed); // 左右移動
+      const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
+      const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
+
+      // 左右移動（ArrowLeft, ArrowRight）
+      if (keys.ArrowLeft) camera.position.addScaledVector(left, moveSpeed);  // 左移動
+      if (keys.ArrowRight) camera.position.addScaledVector(right, moveSpeed); // 右移動
     }
 
     // ウィンドウサイズが変更された場合に対応
