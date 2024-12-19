@@ -69,7 +69,10 @@
 
       // カメラ移動（WASDキー）
       const direction = new THREE.Vector3();
-      camera.getWorldDirection(direction); // 現在のカメラの進行方向を取得
+
+      // カメラの進行方向ベクトル
+      camera.getWorldDirection(direction); // カメラの進行方向を取得
+      direction.y = 0; // Y軸方向の移動を無効にして水平移動のみ
 
       // 移動処理（WASDキー）
       if (keys.w) camera.position.addScaledVector(direction, moveSpeed);  // 前方移動
