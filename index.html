@@ -1,123 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Camera and Terrain</title>
-  <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { display: block; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Control</title>
+    <style>
+        /* カメラ映像のサイズ */
+        #camera {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
 <body>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script>
-    // シーン、カメラ、レンダラーのセットアップ
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+    <h1>Camera Control</h1>
+    <video id="camera" autoplay></video>
 
-    // カメラの初期位置設定
-    camera.position.set(0, 10, 50);
+    <script>
+        let camera = document.getElementById("camera");
 
-    // ライトの追加
-    const light = new THREE.PointLight(0xffffff, 1, 100);
-    light.position.set(0, 50, 0);
-    scene.add(light);
+        // カメラ映像の取得
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                camera.srcObject = stream;
+            })
+            .catch((err) => {
+                console.log("Camera access denied: ", err);
+            });
 
-    const ambientLight = new THREE.AmbientLight(0x404040, 1);
-    scene.add(ambientLight);
+        // カメラの位置を制御するための初期位置
+        let cameraPosition = { x: 0, y: 0 };
 
-    // テクスチャの読み込み（6つの面のテクスチャを指定）
-    const loader = new THREE.TextureLoader();
-    const textures = [
-      loader.load('grass.png'),  // 正面
-      loader.load('grass.png'),  // 背面
-      loader.load('grass.png'),  // 上面
-      loader.load('dirt.png'),   // 底面
-      loader.load('grass.png'),  // 右面
-      loader.load('grass.png')   // 左面
-    ];
+        // 矢印キーでカメラを移動
+        document.addEventListener("keydown", function(event) {
+            switch (event.key) {
+                case "ArrowUp":
+                    cameraPosition.y -= 10;
+                    break;
+                case "ArrowDown":
+                    cameraPosition.y += 10;
+                    break;
+                case "ArrowLeft":
+                    cameraPosition.x -= 10;
+                    break;
+                case "ArrowRight":
+                    cameraPosition.x += 10;
+                    break;
+                default:
+                    break;
+            }
 
-    // 地形生成
-    const blockSize = 2;
-    const horizonWidth = 50;
-    const horizonDepth = 50;
-    const maxHeight = 25;  // 高さの最大値
-    generateHorizon(scene, horizonWidth, horizonDepth, blockSize, textures, maxHeight);
-
-    // カメラの移動速度
-    const moveSpeed = -0.1;
-    const rotationSpeed = 0.02;
-
-    // キー入力管理
-    const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
-
-    window.addEventListener('keydown', (event) => {
-      if (keys.hasOwnProperty(event.key)) keys[event.key] = true;
-    });
-
-    window.addEventListener('keyup', (event) => {
-      if (keys.hasOwnProperty(event.key)) keys[event.key] = false;
-    });
-
-    // アニメーションループ
-    function animate() {
-      requestAnimationFrame(animate);
-
-      // カメラ移動（WASDキー）
-      const direction = new THREE.Vector3();
-      camera.getWorldDirection(direction); // 現在のカメラの進行方向を取得
-
-      // 移動処理（WASDキー）
-      if (keys.w) camera.position.addScaledVector(direction, moveSpeed);  // 前方移動
-      if (keys.s) camera.position.addScaledVector(direction, -moveSpeed); // 後方移動
-
-      // 左右方向の計算（進行方向とカメラの上方向の外積）
-      const left = new THREE.Vector3().crossVectors(camera.up, direction).normalize();
-      const right = new THREE.Vector3().crossVectors(direction, camera.up).normalize();
-
-      if (keys.a) camera.position.addScaledVector(left, moveSpeed);  // 左移動
-      if (keys.d) camera.position.addScaledVector(right, moveSpeed); // 右移動
-
-      // カメラ回転（矢印キー）
-      if (keys.ArrowUp) camera.rotation.x -= rotationSpeed; // 上方向回転
-      if (keys.ArrowDown) camera.rotation.x += rotationSpeed; // 下方向回転
-      if (keys.ArrowLeft) camera.rotation.y -= rotationSpeed; // 左方向回転
-      if (keys.ArrowRight) camera.rotation.y += rotationSpeed; // 右方向回転
-
-      // シーンをレンダリング
-      renderer.render(scene, camera);
-    }
-
-    animate();
-
-    // 地平線を生成する関数
-    function generateHorizon(scene, width, depth, blockSize, textures, maxHeight) {
-      for (let x = 0; x < width; x++) {
-        for (let z = 0; z < depth; z++) {
-          const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
-          const materials = textures.map(texture => new THREE.MeshBasicMaterial({ map: texture }));
-
-          const block = new THREE.Mesh(geometry, materials);
-
-          // ランダムな高さを設定
-          const height = Math.floor(Math.random() * maxHeight) + 1;  // 1からmaxHeightの範囲でランダムな高さを設定
-          block.position.set(x * blockSize, height, z * blockSize);  // 高さを追加
-
-          scene.add(block);
-        }
-      }
-    }
-
-    // ウィンドウサイズが変更された場合に対応
-    window.addEventListener('resize', () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-    });
-  </script>
+            // カメラの移動を適用
+            camera.style.transform = `translate(${cameraPosition.x}px, ${cameraPosition.y}px)`;
+        });
+    </script>
 </body>
 </html>
